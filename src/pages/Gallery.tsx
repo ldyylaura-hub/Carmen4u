@@ -108,18 +108,23 @@ export default function Gallery() {
             >
               {item.type === 'video' ? (
                 <div className="aspect-video relative">
-                  <ReactPlayer 
-                    url={item.url} 
-                    width="100%" 
-                    height="100%" 
-                    light={true} 
-                    controls={true}
-                    playIcon={
-                      <div className="w-16 h-16 bg-pink-500/90 rounded-full flex items-center justify-center group-hover:bg-pink-600 transition-colors backdrop-blur-sm shadow-lg">
-                        <Play className="w-8 h-8 text-white ml-1" />
-                      </div>
-                    }
-                  />
+                  <div className='react-player-wrapper w-full h-full'>
+                    {/* @ts-ignore */}
+                    <ReactPlayer 
+                      // @ts-ignore
+                      url={item.url} 
+                      width="100%" 
+                      height="100%" 
+                      // @ts-ignore
+                      light={item.thumbnail_url ? item.thumbnail_url : true} 
+                      controls={true}
+                      playIcon={
+                        <div className="w-16 h-16 bg-pink-500/90 rounded-full flex items-center justify-center group-hover:bg-pink-600 transition-colors backdrop-blur-sm shadow-lg">
+                          <Play className="w-8 h-8 text-white ml-1" />
+                        </div>
+                      }
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="aspect-[4/3] overflow-hidden relative cursor-pointer group">
