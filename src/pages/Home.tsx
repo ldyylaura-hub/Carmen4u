@@ -1,68 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, Mic2, Sparkles, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export default function Home() {
-  const [currentVideoIndex, setCurrentVideoIndex] = React.useState(0);
-  const videos = [
-    "https://kzqqwvwfyvpghvawxpnv.supabase.co/storage/v1/object/sign/video/greetingvideo1.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZTk4NjdjNC00OTg0LTRiNzItYmMxNS1jNWVmNjljOThmOTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9ncmVldGluZ3ZpZGVvMS5tcDQiLCJpYXQiOjE3NzEwMDE5OTEsImV4cCI6MTgwMjUzNzk5MX0.1hwmZqMF26PJ36WwqNuIoxMiL702XWn4GQ-I2ktcMTw",
-    "https://kzqqwvwfyvpghvawxpnv.supabase.co/storage/v1/object/sign/video/greetingvideo2.mp4?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZTk4NjdjNC00OTg0LTRiNzItYmMxNS1jNWVmNjljOThmOTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ2aWRlby9ncmVldGluZ3ZpZGVvMi5tcDQiLCJpYXQiOjE3NzEwMDI1OTEsImV4cCI6MTgwMjUzODU5MX0.8hSoma1Dki--OMLHDmu5fJVLmjHbrmUZ-uxwCTnSGyY"
-  ];
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
-  // Preload next video to minimize gap
-  const nextVideoIndex = (currentVideoIndex + 1) % videos.length;
+  useEffect(() => {
+    const fetchVideo = async () => {
+      // Fetch the plural key first
+      let { data } = await supabase.from('home_content').select('value').eq('key', 'greeting_videos').single();
+      
+      // Fallback to old key if not found
+      if (!data) {
+         const { data: oldData } = await supabase.from('home_content').select('value').eq('key', 'greeting_video').single();
+         data = oldData;
+      }
+
+      if (data && data.value) {
+        try {
+          const parsed = JSON.parse(data.value);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+              setVideoUrls(parsed);
+          } else {
+              setVideoUrls([data.value]);
+          }
+        } catch (e) {
+          setVideoUrls([data.value]);
+        }
+      }
+    };
+    fetchVideo();
+  }, []);
+
+  const handleVideoEnded = () => {
+    if (videoUrls.length > 1) {
+        setCurrentVideoIndex((prev) => (prev + 1) % videoUrls.length);
+    }
+  };
 
   return (
     <div>
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
-        {/* Double Video Buffer Technique */}
-        {videos.map((src, index) => {
-          // Determine if this video should be playing
-          const isPlaying = index === currentVideoIndex;
-          // Preload the next video so it's ready
-          const isNext = index === nextVideoIndex;
-          
-          return (
-            <video 
-              key={src}
-              // Use a ref to control playback programmatically if needed, but autoPlay usually works
-              // The key is to make sure it plays when it becomes visible
-              ref={(el) => {
-                if (el) {
-                  if (isPlaying) {
-                    el.play().catch(e => console.log("Auto-play prevented:", e));
-                  } else if (!isNext) {
-                    // Reset other videos so they start from beginning next time
-                    el.currentTime = 0;
-                    el.pause();
-                  }
-                }
-              }}
-              muted 
-              playsInline
-              className={`absolute inset-0 w-full h-full object-cover z-0 transition-opacity duration-500 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}
-              style={{ display: isPlaying || isNext ? 'block' : 'none' }}
-              onEnded={() => {
-                if (isPlaying) {
-                  setCurrentVideoIndex(nextVideoIndex);
-                }
-              }}
-            >
-              <source src={src} type="video/mp4" />
-            </video>
-          );
-        })}
+        {videoUrls.length > 0 ? (
+          <video 
+            key={videoUrls[currentVideoIndex]} // Key change forces re-render for new source
+            src={videoUrls[currentVideoIndex]}
+            autoPlay
+            muted 
+            playsInline
+            onEnded={handleVideoEnded}
+            className="absolute inset-0 w-full h-full object-cover z-0"
+          />
+        ) : (
+          /* Fallback image if no video is set */
+          <img 
+            src="https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=2070&auto=format&fit=crop" 
+            alt="Background" 
+            className="absolute inset-0 w-full h-full object-cover -z-10" 
+          />
+        )}
         
-        {/* Fallback image */}
-        <img 
-          src="https://images.unsplash.com/photo-1490730141103-6cac27aaab94?q=80&w=2070&auto=format&fit=crop" 
-          alt="Background" 
-          className="absolute inset-0 w-full h-full object-cover -z-10" 
-        />
-        
-        {/* Gradient Overlay - Adjusted for video readability */}
+        {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-black/20 z-10" />
         <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px] z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-pink-50 via-transparent to-transparent z-10" />
@@ -126,59 +128,133 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Charm Showcase */}
+      {/* Charm Showcase -> Fan Moments */}
       <section className="py-24 px-4">
         <div className="container mx-auto">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold text-center mb-16 text-slate-800"
+            className="text-4xl font-bold text-center mb-16 text-slate-800 flex items-center justify-center gap-3"
           >
-            Why We Love Her
+            <Sparkles className="text-yellow-400 w-8 h-8" />
+            我的入坑契机
+            <Sparkles className="text-yellow-400 w-8 h-8" />
           </motion.h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Charm 1 */}
-            <CharmCard 
-              icon={<Mic2 className="w-12 h-12 text-pink-500" />}
-              title="Angelic Vocals"
-              description="A voice that transcends genres, delivering emotion in every note."
-              delay={0.2}
-            />
-            {/* Charm 2 */}
-            <CharmCard 
-              icon={<Sparkles className="w-12 h-12 text-purple-500" />}
-              title="Stunning Visuals"
-              description="Captivating stage presence and an iconic fashion sense."
-              delay={0.4}
-            />
-            {/* Charm 3 */}
-            <CharmCard 
-              icon={<Heart className="w-12 h-12 text-red-500" />}
-              title="Golden Personality"
-              description="Humble, funny, and deeply connected with her fans."
-              delay={0.6}
-            />
-          </div>
+          <FanMoments />
         </div>
       </section>
     </div>
   );
 }
 
-function CharmCard({ icon, title, description, delay }: { icon: React.ReactNode, title: string, description: string, delay: number }) {
+function FanMoments() {
+    const [moments, setMoments] = useState<{id: string, content: string}[]>([]);
+
+    useEffect(() => {
+        fetchMoments();
+    }, []);
+
+    const fetchMoments = async () => {
+        // Fetch approved charms/moments
+        const { data } = await supabase.from('idol_charms').select('id, content').eq('is_approved', true);
+        
+        let allItems = data || [];
+        
+        // If not enough, add defaults
+        if (allItems.length < 3) {
+            const defaults = [
+                { id: 'def1', content: 'The Chase 的高音太震撼了！' },
+                { id: 'def2', content: '看了综艺被性格圈粉，太可爱了' },
+                { id: 'def3', content: '始于颜值，陷于才华，忠于人品' }
+            ];
+            allItems = [...allItems, ...defaults];
+        }
+
+        // Randomly pick 3
+        const shuffled = allItems.sort(() => 0.5 - Math.random()).slice(0, 3);
+        setMoments(shuffled);
+    };
+
+    return (
+        <div className="grid md:grid-cols-3 gap-8 justify-items-center">
+            {moments.map((moment, index) => (
+                <FlipCharmCard key={moment.id} content={moment.content} index={index} />
+            ))}
+        </div>
+    );
+}
+
+function FlipCharmCard({ content, index }: { content: string, index: number }) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  // Use the provided doll image as background
+  const dollImage = "https://kzqqwvwfyvpghvawxpnv.supabase.co/storage/v1/object/sign/picture/doll.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZTk4NjdjNC00OTg0LTRiNzItYmMxNS1jNWVmNjljOThmOTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaWN0dXJlL2RvbGwucG5nIiwiaWF0IjoxNzcxMDA1MTE0LCJleHAiOjE5Mjg2ODUxMTR9.55MkHT6qU80g14pdb5DJdTHX3rTHLcUfUyisfp3X6Nw";
+  
+  // Subtle rotation for organic feel
+  const rotate = ((index * 7) % 10) - 5; 
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay, duration: 0.6 }}
-      className="bg-white/80 backdrop-blur-sm p-8 rounded-3xl border border-pink-100 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all text-center group"
+    <div 
+      className="w-64 h-80 cursor-pointer group perspective-1000"
+      onClick={() => setIsFlipped(!isFlipped)}
+      style={{ perspective: '1000px' }}
     >
-      <div className="flex justify-center mb-6 p-4 bg-pink-50 rounded-full w-24 h-24 mx-auto items-center group-hover:bg-pink-100 transition-colors">{icon}</div>
-      <h3 className="text-2xl font-bold mb-4 text-slate-800">{title}</h3>
-      <p className="text-slate-600 leading-relaxed">{description}</p>
-    </motion.div>
+      <motion.div
+        className="w-full h-full relative transition-all duration-500"
+        style={{ 
+          transformStyle: 'preserve-3d',
+          rotate: `${rotate}deg`
+        }}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        whileHover={{ scale: 1.05 }}
+      >
+        {/* Front Side: Just the Doll Image */}
+        <div 
+          className="absolute inset-0 w-full h-full backface-hidden rounded-2xl shadow-xl overflow-hidden bg-pink-50"
+          style={{ 
+            backgroundImage: `url('${dollImage}')`,
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
+          }}
+        >
+          {/* Optional: "Click Me" hint on hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
+            <span className="bg-white/90 px-4 py-2 rounded-full text-pink-500 text-sm font-bold shadow-sm">Click to Flip! ✨</span>
+          </div>
+        </div>
+
+        {/* Back Side: Text Content */}
+        <div 
+          className="absolute inset-0 w-full h-full backface-hidden rounded-2xl shadow-xl overflow-hidden bg-white p-6 flex items-center justify-center text-center border-4 border-pink-100"
+          style={{ 
+            transform: 'rotateY(180deg)',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden'
+          }}
+        >
+          {/* Background Doll Watermark */}
+          <div 
+             className="absolute inset-0 opacity-10 pointer-events-none"
+             style={{
+               backgroundImage: `url('${dollImage}')`,
+               backgroundSize: 'contain',
+               backgroundRepeat: 'no-repeat',
+               backgroundPosition: 'center',
+             }}
+          />
+          
+          <div className="relative z-10">
+            <Sparkles className="w-8 h-8 text-yellow-400 mx-auto mb-4" />
+            <p className="text-slate-700 font-bold text-lg leading-relaxed">{content}</p>
+            <div className="mt-4 text-pink-400 text-xs font-bold uppercase tracking-widest">My Reason</div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }

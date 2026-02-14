@@ -22,6 +22,7 @@ export default function WhyStan() {
   const [showAddCharm, setShowAddCharm] = useState(false);
   const [newCharmText, setNewCharmText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [carouselImages, setCarouselImages] = useState<{ src: string, label: string }[]>([]);
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,7 +30,54 @@ export default function WhyStan() {
   
   useEffect(() => {
     fetchCharms();
+    fetchCarouselImages();
   }, []);
+
+  const fetchCarouselImages = async () => {
+    // Fetch random images from Concept or Poster albums
+    // First find albums
+    const { data: albums } = await supabase.from('albums')
+      .select('id, title, category')
+      .in('category', ['concept', 'poster']);
+    
+    if (albums && albums.length > 0) {
+      const albumIds = albums.map(a => a.id);
+      // Fetch media items
+      const { data: media } = await supabase.from('media_items')
+        .select('url, title, album_id')
+        .in('album_id', albumIds)
+        .eq('type', 'photo')
+        .limit(20); // Get a pool to randomize
+
+      if (media && media.length > 0) {
+        // Randomize and pick 5-10
+        const shuffled = media.sort(() => 0.5 - Math.random()).slice(0, 10);
+        setCarouselImages(shuffled.map(m => {
+          const album = albums.find(a => a.id === m.album_id);
+          return {
+            src: m.url,
+            label: album?.title || 'Concept Photo'
+          };
+        }));
+      } else {
+        // Fallback
+        setCarouselImages([
+           { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
+        ]);
+      }
+    } else {
+        // Fallback if no albums
+        setCarouselImages([
+           { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
+           { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
+        ]);
+    }
+  };
 
   const fetchCharms = async () => {
     // 1. Get user generated charms
@@ -45,17 +93,29 @@ export default function WhyStan() {
       content
     }));
 
-    let ugcCharms: Charm[] = [];
+    let allCharms: Charm[] = [...presetObjects];
+    
     if (data) {
-      // Shuffle UGC only
-      ugcCharms = data
-        .filter(d => !PRESET_CHARMS.includes(d.content)) // Avoid exact duplicate text
-        .sort(() => 0.5 - Math.random());
+      const ugcCharms = data
+        .filter(d => !PRESET_CHARMS.includes(d.content))
+        .map(d => ({ id: d.id, content: d.content }));
+      
+      allCharms = [...allCharms, ...ugcCharms];
     }
-
-    setCharms([...presetObjects, ...ugcCharms]);
+    
+    // Shuffle all charms
+    const shuffled = allCharms.sort(() => 0.5 - Math.random());
+    
+    // Take only the first 5 for display (as requested: randomly extract a few)
+    // If you want more, increase this number or implement pagination on the random set
+    setCharms(shuffled.slice(0, 5));
   };
 
+  // Pagination is now effectively disabled or just showing 1 page of 5 random items
+  const totalPages = 1; 
+  const currentCharms = charms; 
+
+  /* 
   const totalPages = Math.ceil(charms.length / itemsPerPage);
   const currentCharms = charms.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -66,6 +126,7 @@ export default function WhyStan() {
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
+  */
 
   const handleAddCharm = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,15 +145,8 @@ export default function WhyStan() {
     setIsSubmitting(false);
   };
 
-  const carouselImages = [
-    { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
-    { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
-    { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
-    { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
-  ];
-
   return (
-    <div className="min-h-screen py-20 px-4 relative">
+    <div className="min-h-screen py-20 px-4 relative overflow-x-hidden">
       {/* Full Page Background Image */}
       <div 
         className="fixed inset-0 bg-cover bg-center z-0"
@@ -104,6 +158,8 @@ export default function WhyStan() {
       {/* Pink Overlay to ensure text readability - Reduced opacity to show background better */}
       <div className="fixed inset-0 bg-pink-50/20 z-0 pointer-events-none" />
 
+      {/* Decorative Side Borders - REMOVED per user request */}
+      
       <div className="container mx-auto max-w-6xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -120,36 +176,55 @@ export default function WhyStan() {
         </motion.div>
 
         {/* Full Width Scrolling Carousel */}
-        <div className="mb-16 -mx-4 md:-mx-0 overflow-hidden relative group h-[300px] md:h-[400px]">
-           {/* Decorative Text Background */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10rem] md:text-[15rem] font-black text-white/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay">
-              CARMEN
-           </div>
+        {carouselImages.length > 0 && (
+          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-10 group">
+             {/* Background Decoration */}
+             <div className="absolute inset-0 bg-gradient-to-r from-pink-50/0 via-pink-50/30 to-pink-50/0 pointer-events-none" />
+             
+             {/* Decorative Text Background */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm">
+                CARMEN
+             </div>
 
-           <div className="relative z-10 flex gap-4 overflow-hidden py-4 items-center h-full">
-             <motion.div 
-               className="flex gap-4 flex-nowrap"
-               animate={{ x: ["0%", "-50%"] }}
-               transition={{ 
-                 repeat: Infinity, 
-                 ease: "linear", 
-                 duration: 20 
-               }}
-             >
-               {[...carouselImages, ...carouselImages, ...carouselImages].map((item, index) => (
-                 <div key={index} className="w-[300px] md:w-[400px] h-[200px] md:h-[300px] flex-shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white/50 relative group/item">
-                   <img src={item.src} alt={item.label} className="w-full h-full object-cover hover:scale-110 transition-transform duration-700" />
-                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity flex items-end p-4">
-                     <span className="text-white font-bold text-lg">{item.label}</span>
+             <div className="relative z-10 flex gap-10 overflow-hidden items-center h-[400px]">
+               <motion.div 
+                 className="flex gap-10 flex-nowrap pl-10"
+                 animate={{ x: ["0%", "-50%"] }}
+                 transition={{ 
+                   repeat: Infinity, 
+                   ease: "linear", 
+                   duration: 40 
+                 }}
+               >
+                 {/* Duplicate list multiple times to ensure seamless infinite scroll */}
+                 {[...carouselImages, ...carouselImages, ...carouselImages, ...carouselImages].map((item, index) => (
+                   <div 
+                     key={index} 
+                     className="w-[280px] md:w-[340px] bg-white p-4 pb-14 shadow-2xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card"
+                     style={{
+                       transform: `rotate(${index % 2 === 0 ? '3deg' : '-3deg'}) translateY(${index % 3 * 10}px)`,
+                       borderRadius: '2px'
+                     }}
+                   >
+                     {/* Tape effect */}
+                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-10 bg-white/20 backdrop-blur-sm border-l border-r border-white/30 shadow-sm rotate-1 z-10 opacity-70" />
+                     
+                     <div className="w-full h-[280px] overflow-hidden bg-gray-100 mb-3 relative">
+                       <img src={item.src} alt={item.label} className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" />
+                       <div className="absolute inset-0 bg-pink-500/0 group-hover/card:bg-pink-500/10 transition-colors duration-300" />
+                     </div>
+                     
+                     <div className="absolute bottom-4 left-0 right-0 text-center px-2">
+                       <span className="font-handwriting text-slate-700 font-bold text-xl rotate-1 inline-block truncate w-full">
+                         {item.label} 💖
+                       </span>
+                     </div>
                    </div>
-                 </div>
-               ))}
-             </motion.div>
-           </div>
-           
-           <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-pink-100/50 to-transparent z-20 pointer-events-none" />
-           <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-pink-100/50 to-transparent z-20 pointer-events-none" />
-        </div>
+                 ))}
+               </motion.div>
+             </div>
+          </div>
+        )}
 
         {/* Basic Profile Section (Moved Below) */}
         <motion.div 
@@ -223,7 +298,8 @@ export default function WhyStan() {
             </AnimatePresence>
           </div>
 
-          {/* Pagination Controls */}
+          {/* Pagination Controls - Hidden as requested */}
+          {/* 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-6 mt-12">
               <button 
@@ -245,6 +321,7 @@ export default function WhyStan() {
               </button>
             </div>
           )}
+          */}
 
           {/* Add Charm Button */}
           <div className="flex justify-center mt-12">
@@ -261,37 +338,53 @@ export default function WhyStan() {
         {showAddCharm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white/90 backdrop-blur-md rounded-3xl p-8 max-w-md w-full shadow-2xl border border-pink-100 relative"
+              initial={{ opacity: 0, scale: 0.9, rotate: -2 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative border-4 border-pink-200 overflow-hidden"
             >
+              {/* Decorative Corner Elements */}
+              <div className="absolute top-0 left-0 w-16 h-16 bg-pink-100 rounded-br-full -translate-x-1/2 -translate-y-1/2 z-0" />
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-pink-50 rounded-tl-full translate-x-1/3 translate-y-1/3 z-0" />
+              <div className="absolute top-4 right-4 text-4xl opacity-20 rotate-12 select-none">✨</div>
+              
               <button 
                 onClick={() => setShowAddCharm(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+                className="absolute top-4 right-4 text-pink-300 hover:text-pink-500 transition-colors z-10"
               >
-                <X size={24} />
+                <X size={28} strokeWidth={2.5} />
               </button>
               
-              <h3 className="text-2xl font-bold text-slate-800 mb-6 text-center">安利卡门的小闪光 ✨</h3>
-              
-              <form onSubmit={handleAddCharm}>
-                <textarea
-                  value={newCharmText}
-                  onChange={(e) => setNewCharmText(e.target.value)}
-                  placeholder="比如：笑起来眼睛弯弯的像月牙..."
-                  className="w-full h-32 bg-pink-50/50 rounded-xl border-2 border-pink-100 p-4 text-slate-700 placeholder:text-pink-300 focus:border-pink-400 focus:outline-none focus:bg-white transition-all resize-none mb-6 font-medium"
-                  maxLength={50}
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !newCharmText.trim()}
-                    className="bg-pink-500 hover:bg-pink-600 disabled:bg-pink-300 text-white px-6 py-2 rounded-full font-bold shadow-md transition-all flex items-center gap-2"
-                  >
-                    {isSubmitting ? '发送中...' : '发射安利 🚀'}
-                  </button>
+              <div className="relative z-10 text-center">
+                <div className="inline-block bg-pink-100 px-4 py-1 rounded-full text-pink-500 text-sm font-bold mb-3 border border-pink-200">
+                   Add Your Charm
                 </div>
-              </form>
+                <h3 className="text-2xl font-handwriting font-bold text-slate-800 mb-6 drop-shadow-sm">安利卡门的小闪光 ✨</h3>
+                
+                <form onSubmit={handleAddCharm}>
+                  <div className="relative group">
+                    <textarea
+                      value={newCharmText}
+                      onChange={(e) => setNewCharmText(e.target.value)}
+                      placeholder="比如：笑起来眼睛弯弯的像月牙..."
+                      className="w-full h-40 bg-pink-50/30 rounded-2xl border-2 border-dashed border-pink-200 p-5 text-slate-700 placeholder:text-pink-300/70 focus:border-pink-400 focus:outline-none focus:bg-white transition-all resize-none mb-6 font-medium leading-relaxed text-lg"
+                      maxLength={50}
+                    />
+                    <div className="absolute bottom-8 right-4 text-xs text-pink-300 font-bold bg-white/80 px-2 py-0.5 rounded-full">
+                      {newCharmText.length}/50
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !newCharmText.trim()}
+                      className="bg-gradient-to-r from-pink-400 to-pink-500 hover:from-pink-500 hover:to-pink-600 disabled:opacity-50 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-pink-200 transition-all flex items-center gap-2 hover:scale-105 active:scale-95"
+                    >
+                      {isSubmitting ? '发送中...' : '发射安利 🚀'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}
@@ -418,10 +511,6 @@ function CharmCard({ content, index }: { content: string, index: number }) {
           }}
         >
           {/* Heavy white overlay to create "blank" look while keeping shape */}
-          {/* We use a mask-image approach or just a simple overlay if the image has transparency. 
-              Since it's a PNG with transparency, a simple div overlay might fill the bounding box.
-              Better approach: Use CSS filter to make it white/blank.
-          */}
           <div 
              className="absolute inset-0"
              style={{

@@ -1,6 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Hide standard scrollbar globally */
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+html, body {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+  overflow: auto; /* Allow scroll but hide bar */
+}
+
+/* Custom "Doll" Scrollbar using pseudo-element on a fixed container if possible, 
+   but since we can't easily replace the browser's native scrollbar thumb with an image via standard CSS in all browsers seamlessly,
+   we will implement a custom scroll progress indicator in Layout.tsx instead.
+   So here we just ensure the native one is gone. */
+
+@layer utilities {
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .font-handwriting {
+    font-family: 'Hachi Maru Pop', cursive;
+  }
+}
 
 @layer base {
   :root {
@@ -35,15 +67,4 @@
   }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
 
-::-webkit-scrollbar-track {
-  @apply bg-pink-50;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-pink-200 rounded-full hover:bg-pink-300 transition-colors;
-}

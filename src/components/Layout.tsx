@@ -3,34 +3,64 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, Sparkles, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { ClickEffectSafe as ClickEffect } from './ClickEffect';
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const location = useLocation();
+
+  // Custom Scroll Progress Bar
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollTop;
+      const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scroll = `${totalScroll / windowHeight}`;
+      setScrollProgress(Number(scroll));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Check admin status on route change too, just in case
   useEffect(() => {
-    checkAdmin();
-  }, [location]);
+    checkUser();
+  }, [location, isMenuOpen]); // Also check when menu opens (for mobile) or re-renders
 
-  const checkAdmin = async () => {
+  const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    
     if (user) {
       // Use the secure RPC function we created
       const { data } = await supabase.rpc('is_admin');
-      if (data) setIsAdmin(true);
+      if (data) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
     } else {
       setIsAdmin(false);
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsAdmin(false);
+    window.location.href = '/'; // Redirect to home
+  };
+
   const links = [
-    { to: '/', label: 'Home' },
+    { to: '/', label: '卡门小屋' },
     { to: '/why-stan', label: '安利手册' },
-    { to: '/timeline', label: 'Timeline' },
-    { to: '/gallery', label: 'Gallery' },
-    { to: '/community', label: 'Community' },
+    { to: '/timeline', label: '卡卡的星途漫步' },
+    { to: '/gallery', label: '小卡时光照相机' },
+    { to: '/community', label: '卡比论坛' },
   ];
 
   // Only add Admin link if not already on the admin page (avoid clutter)
@@ -56,7 +86,29 @@ export default function Layout() {
   */
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-slate-800">
+    <div className="min-h-screen flex flex-col font-sans text-slate-800 relative">
+      <ClickEffect />
+      
+      {/* Force hide scrollbar with inline style as backup */}
+      <style>{`
+        ::-webkit-scrollbar { display: none !important; }
+        html, body { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+      `}</style>
+
+      {/* Custom Doll Scrollbar */}
+      <div className="fixed right-1 top-0 bottom-0 w-0 z-[100] pointer-events-none hidden md:block">
+        <div 
+          className="absolute w-16 h-16 -right-5"
+          style={{ top: `${Math.min(Math.max(scrollProgress * 90, 0), 90)}%` }} 
+        >
+          <img 
+            src="https://kzqqwvwfyvpghvawxpnv.supabase.co/storage/v1/object/sign/picture/doll.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZTk4NjdjNC00OTg0LTRiNzItYmMxNS1jNWVmNjljOThmOTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaWN0dXJlL2RvbGwucG5nIiwiaWF0IjoxNzcxMDA1MTE0LCJleHAiOjE5Mjg2ODUxMTR9.55MkHT6qU80g14pdb5DJdTHX3rTHLcUfUyisfp3X6Nw" 
+            alt="Scroll Doll" 
+            className="w-full h-full object-contain drop-shadow-lg filter hover:brightness-110 animate-bounce"
+          />
+        </div>
+      </div>
+
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-md border-b border-pink-100 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to={isAdmin ? "/admin" : "/"} className="flex items-center gap-2 text-2xl font-extrabold tracking-tighter text-pink-500 hover:text-pink-600 transition-colors group">
@@ -94,6 +146,22 @@ export default function Layout() {
                 Admin
               </Link>
             )}
+
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="text-sm font-bold text-slate-500 hover:text-pink-600 transition-all"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="text-sm font-bold text-slate-500 hover:text-pink-600 transition-all"
+              >
+                走进小卡的世界
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -124,6 +192,25 @@ export default function Layout() {
                 {link.label}
               </Link>
             ))}
+            {user ? (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="text-base font-bold text-left text-slate-600 hover:text-pink-500 transition-colors"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="text-base font-bold text-slate-600 hover:text-pink-500 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                走进小卡的世界
+              </Link>
+            )}
           </motion.nav>
         )}
       </header>

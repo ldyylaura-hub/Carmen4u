@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Calendar, Star, Music, Award, Gift, ShoppingBag, Trophy } from 'lucide-react';
+import { Calendar, Star, Music, Award, Gift, ShoppingBag, Trophy, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface TimelineEvent {
   id: string;
@@ -12,6 +13,8 @@ interface TimelineEvent {
   category: string;
   display_order: number;
   image_url?: string;
+  cover_url?: string;
+  album_id?: string;
 }
 
 export default function Timeline() {
@@ -23,8 +26,8 @@ export default function Timeline() {
       const { data, error } = await supabase
         .from('timeline_events')
         .select('*')
-        .order('event_date', { ascending: true })
-        .order('display_order', { ascending: true });
+        .order('display_order', { ascending: true }) // Prioritize custom order
+        .order('event_date', { ascending: false });
 
       if (error) {
         console.error('Error fetching events:', error);
@@ -82,9 +85,10 @@ function TimelineItem({ event, index }: { event: TimelineEvent; index: number })
 
   const isEven = index % 2 === 0;
 
-  // Determine color and icon based on category
-  const getCategoryStyles = (category: string) => {
-    switch (category.toLowerCase()) {
+  // Determine color and icon based on category (default to Star if null)
+  const getCategoryStyles = (category: string | null) => {
+    const cat = (category || '').toLowerCase();
+    switch (cat) {
       case 'debut':
       case 'comeback':
       case 'release':
@@ -166,16 +170,18 @@ function TimelineItem({ event, index }: { event: TimelineEvent; index: number })
 }
 
 function ContentCard({ event, styles }: { event: TimelineEvent, styles: any }) {
+  const displayImage = event.cover_url || event.image_url;
+
   return (
     <div className={`bg-white/90 backdrop-blur-sm p-4 rounded-2xl border ${styles.border} shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-left group overflow-hidden`}>
-      {event.image_url && (
+      {displayImage && (
         <div className="w-full h-40 mb-4 rounded-xl overflow-hidden relative">
           <div className={`absolute top-2 right-2 px-2 py-1 rounded-full bg-white/80 backdrop-blur-md ${styles.color} text-xs font-bold shadow-sm z-10 flex items-center gap-1`}>
              {styles.icon}
-             <span className="capitalize">{event.category}</span>
+             <span className="capitalize">{event.category || 'Event'}</span>
           </div>
           <img 
-            src={event.image_url} 
+            src={displayImage} 
             alt={event.title} 
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -184,10 +190,17 @@ function ContentCard({ event, styles }: { event: TimelineEvent, styles: any }) {
       <div className="px-2 pb-2">
         <h3 className="text-xl font-bold mb-2 text-slate-800 group-hover:text-pink-600 transition-colors">{event.title}</h3>
         <p className="text-slate-600 text-sm leading-relaxed mb-4">{event.description}</p>
-        {!event.image_url && (
+        
+        {event.album_id && (
+          <Link to={`/gallery?album=${event.album_id}`} className="inline-flex items-center gap-2 text-pink-500 font-bold text-sm hover:underline">
+            View Album <ExternalLink size={14} />
+          </Link>
+        )}
+
+        {!displayImage && !event.album_id && (
            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-50 ${styles.color} text-xs font-bold border ${styles.border} capitalize`}>
              {styles.icon}
-             {event.category}
+             {event.category || 'Event'}
            </span>
         )}
       </div>
