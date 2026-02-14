@@ -41,7 +41,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Nunito"', 'sans-serif'], // Added a softer font suggestion, need to import it or rely on system
+        sans: ['"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
+        cute: ['"ZCOOL KuaiLe"', 'cursive'],
       }
     },
   },
