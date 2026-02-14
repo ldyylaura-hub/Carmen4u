@@ -31,81 +31,96 @@ export default function WhyStan() {
   }, []);
 
   const fetchCarouselImages = async () => {
-    // Fetch random images from Concept or Poster albums
-    // First find albums
-    const { data: albums } = await supabase.from('albums')
-      .select('id, title, category')
-      .in('category', ['concept', 'poster']);
-    
-    if (albums && albums.length > 0) {
-      const albumIds = albums.map(a => a.id);
-      // Fetch media items
-      const { data: media } = await supabase.from('media_items')
-        .select('url, title, album_id')
-        .in('album_id', albumIds)
-        .eq('type', 'photo')
-        .limit(20); // Get a pool to randomize
+    const fallbackImages = [
+       { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
+       { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
+       { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
+       { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
+    ];
 
-      if (media && media.length > 0) {
-        // Randomize and pick 5-10
-        const shuffled = media.sort(() => 0.5 - Math.random()).slice(0, 10);
-        setCarouselImages(shuffled.map(m => {
-          const album = albums.find(a => a.id === m.album_id);
-          return {
-            src: m.url,
-            label: album?.title || 'Concept Photo'
-          };
-        }));
+    try {
+      // Fetch random images from Concept or Poster albums
+      // First find albums
+      const { data: albums, error: albumsError } = await supabase.from('albums')
+        .select('id, title, category')
+        .in('category', ['concept', 'poster']);
+      
+      if (albumsError) throw albumsError;
+
+      if (albums && albums.length > 0) {
+        const albumIds = albums.map(a => a.id);
+        // Fetch media items
+        const { data: media, error: mediaError } = await supabase.from('media_items')
+          .select('url, title, album_id')
+          .in('album_id', albumIds)
+          .eq('type', 'photo')
+          .limit(20); // Get a pool to randomize
+        
+        if (mediaError) throw mediaError;
+
+        if (media && media.length > 0) {
+          // Randomize and pick 5-10
+          const shuffled = media.sort(() => 0.5 - Math.random()).slice(0, 10);
+          setCarouselImages(shuffled.map(m => {
+            const album = albums.find(a => a.id === m.album_id);
+            return {
+              src: m.url,
+              label: album?.title || 'Concept Photo'
+            };
+          }));
+        } else {
+          setCarouselImages(fallbackImages);
+        }
       } else {
-        // Fallback
-        setCarouselImages([
-           { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
-        ]);
+          setCarouselImages(fallbackImages);
       }
-    } else {
-        // Fallback if no albums
-        setCarouselImages([
-           { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
-           { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
-        ]);
+    } catch (err) {
+      console.error('Error fetching carousel images, using fallback:', err);
+      setCarouselImages(fallbackImages);
     }
   };
 
   const fetchCharms = async () => {
-    // 1. Get user generated charms
-    const { data } = await supabase
-      .from('idol_charms')
-      .select('*')
-      .eq('is_approved', true);
-    
-    // 2. Filter out presets if they exist in DB to avoid duplicates (optional, simplified here)
-    // 3. Construct final list: Presets first, then shuffled UGC
-    const presetObjects = PRESET_CHARMS.map((content, idx) => ({
-      id: `preset-${idx}`,
-      content
-    }));
-
-    let allCharms: Charm[] = [...presetObjects];
-    
-    if (data) {
-      const ugcCharms = data
-        .filter(d => !PRESET_CHARMS.includes(d.content))
-        .map(d => ({ id: d.id, content: d.content }));
+    try {
+      // 1. Get user generated charms
+      const { data, error } = await supabase
+        .from('idol_charms')
+        .select('*')
+        .eq('is_approved', true);
       
-      allCharms = [...allCharms, ...ugcCharms];
+      if (error) console.warn('Error fetching charms, using presets:', error);
+
+      // 2. Filter out presets if they exist in DB to avoid duplicates (optional, simplified here)
+      // 3. Construct final list: Presets first, then shuffled UGC
+      const presetObjects = PRESET_CHARMS.map((content, idx) => ({
+        id: `preset-${idx}`,
+        content
+      }));
+
+      let allCharms: Charm[] = [...presetObjects];
+      
+      if (data) {
+        const ugcCharms = data
+          .filter(d => !PRESET_CHARMS.includes(d.content))
+          .map(d => ({ id: d.id, content: d.content }));
+        
+        allCharms = [...allCharms, ...ugcCharms];
+      }
+      
+      // Shuffle all charms
+      const shuffled = allCharms.sort(() => 0.5 - Math.random());
+      
+      // Take only the first 5 for display (as requested: randomly extract a few)
+      setCharms(shuffled.slice(0, 5));
+    } catch (err) {
+      console.error('Exception fetching charms:', err);
+      // Fallback to presets
+      const presetObjects = PRESET_CHARMS.map((content, idx) => ({
+        id: `preset-${idx}`,
+        content
+      }));
+      setCharms(presetObjects.sort(() => 0.5 - Math.random()).slice(0, 5));
     }
-    
-    // Shuffle all charms
-    const shuffled = allCharms.sort(() => 0.5 - Math.random());
-    
-    // Take only the first 5 for display (as requested: randomly extract a few)
-    // If you want more, increase this number or implement pagination on the random set
-    setCharms(shuffled.slice(0, 5));
   };
 
   const currentCharms = charms; 

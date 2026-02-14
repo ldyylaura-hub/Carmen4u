@@ -17,17 +17,32 @@ export default function UserProfileCard({ user, className = '', onCreate, onProf
   const [realPostCount, setRealPostCount] = React.useState<number | null>(null);
 
   React.useEffect(() => {
+    let mounted = true;
+    
     if (user) {
       const fetchCount = async () => {
-        const { count } = await supabase
-          .from('forum_posts')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id);
-        
-        if (count !== null) setRealPostCount(count);
+        try {
+          const { count, error } = await supabase
+            .from('forum_posts')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+          
+          if (error) {
+            console.error('Error fetching post count:', error);
+            return;
+          }
+          
+          if (mounted && count !== null) setRealPostCount(count);
+        } catch (err) {
+          console.error('Exception fetching post count:', err);
+        }
       };
       fetchCount();
     }
+    
+    return () => {
+      mounted = false;
+    };
   }, [user]);
 
   const getAvatarUrl = () => {
