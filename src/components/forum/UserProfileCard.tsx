@@ -18,6 +18,7 @@ export default function UserProfileCard({ user, className = '', onCreate, onProf
 
   React.useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
     
     if (user) {
       const fetchCount = async () => {
@@ -25,15 +26,19 @@ export default function UserProfileCard({ user, className = '', onCreate, onProf
           const { count, error } = await supabase
             .from('forum_posts')
             .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
+            .eq('user_id', user.id)
+            .abortSignal(controller.signal);
           
           if (error) {
+            // Ignore abort errors
+            if (error.message && error.message.includes('AbortError')) return;
             console.error('Error fetching post count:', error);
             return;
           }
           
           if (mounted && count !== null) setRealPostCount(count);
-        } catch (err) {
+        } catch (err: any) {
+          if (err.name === 'AbortError') return;
           console.error('Exception fetching post count:', err);
         }
       };
@@ -42,6 +47,7 @@ export default function UserProfileCard({ user, className = '', onCreate, onProf
     
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [user]);
 

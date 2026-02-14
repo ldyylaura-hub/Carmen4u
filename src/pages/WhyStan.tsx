@@ -22,7 +22,14 @@ export default function WhyStan() {
   const [showAddCharm, setShowAddCharm] = useState(false);
   const [newCharmText, setNewCharmText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [carouselImages, setCarouselImages] = useState<{ src: string, label: string }[]>([]);
+  const fallbackImages = [
+     { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
+     { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
+     { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
+     { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
+  ];
+
+  const [carouselImages, setCarouselImages] = useState<{ src: string, label: string }[]>(fallbackImages);
   
   
   useEffect(() => {
@@ -31,13 +38,6 @@ export default function WhyStan() {
   }, []);
 
   const fetchCarouselImages = async () => {
-    const fallbackImages = [
-       { src: "https://i.imgs.ovh/2026/02/13/ymOrOM.jpeg", label: "Pre-debut" },
-       { src: "https://i.imgs.ovh/2026/02/13/ymOUWt.jpeg", label: "Debut: The Chase" },
-       { src: "https://i.imgs.ovh/2026/02/13/ymZ97r.jpeg", label: "1st Comeback: Style" },
-       { src: "https://i.imgs.ovh/2026/02/13/ymZodN.jpeg", label: "2nd Comeback: Focus" }
-    ];
-
     try {
       // Fetch random images from Concept or Poster albums
       // First find albums
@@ -68,15 +68,13 @@ export default function WhyStan() {
               label: album?.title || 'Concept Photo'
             };
           }));
-        } else {
-          setCarouselImages(fallbackImages);
         }
-      } else {
-          setCarouselImages(fallbackImages);
+        // If no media, we keep the initial fallbackImages (no need to set again)
       }
+      // If no albums, we keep the initial fallbackImages
     } catch (err) {
       console.error('Error fetching carousel images, using fallback:', err);
-      setCarouselImages(fallbackImages);
+      // Keep initial fallbackImages
     }
   };
 
