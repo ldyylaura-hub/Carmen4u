@@ -41,8 +41,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
-        cute: ['"ZCOOL KuaiLe"', 'cursive'],
+        sans: ['"Hachi Maru Pop"', '"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
+        heading: ['"M PLUS Rounded 1c"', 'sans-serif'],
       }
     },
   },
