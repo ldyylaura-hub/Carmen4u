@@ -200,7 +200,7 @@ export default function WhyStan() {
                  {[...carouselImages, ...carouselImages, ...carouselImages, ...carouselImages].map((item, index) => (
                    <div 
                      key={index} 
-                     className="w-[280px] md:w-[340px] bg-white p-4 pb-14 shadow-2xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card"
+                     className="w-[80vw] max-w-[300px] md:w-[340px] bg-white p-4 pb-14 shadow-2xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card"
                      style={{
                        transform: `rotate(${index % 2 === 0 ? '3deg' : '-3deg'}) translateY(${index % 3 * 10}px)`,
                        borderRadius: '2px'
@@ -209,7 +209,7 @@ export default function WhyStan() {
                      {/* Tape effect */}
                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-10 bg-white/20 backdrop-blur-sm border-l border-r border-white/30 shadow-sm rotate-1 z-10 opacity-70" />
                      
-                     <div className="w-full h-[280px] overflow-hidden bg-gray-100 mb-3 relative">
+                     <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100 mb-3 relative">
                        <img src={item.src} alt={item.label} className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" />
                        <div className="absolute inset-0 bg-pink-500/0 group-hover/card:bg-pink-500/10 transition-colors duration-300" />
                      </div>
@@ -466,7 +466,7 @@ function CharmCard({ content, index }: { content: string, index: number }) {
 
   return (
     <div 
-      className="w-56 h-72 md:w-64 md:h-[340px] cursor-pointer group perspective-1000"
+      className="w-[75vw] max-w-[280px] aspect-[3/4] md:w-64 md:h-[340px] cursor-pointer group perspective-1000"
       onClick={() => setIsFlipped(!isFlipped)}
       style={{ perspective: '1000px' }}
     >

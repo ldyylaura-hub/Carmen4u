@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'home' | 'gallery' | 'timeline' | 'approvals'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'gallery' | 'timeline' | 'approvals' | 'reports'>('home');
 
   useEffect(() => {
     checkAdmin();
@@ -50,6 +50,7 @@ export default function Admin() {
             <TabButton active={activeTab === 'gallery'} onClick={() => setActiveTab('gallery')} icon={<Layers size={18} />} label="Gallery" />
             <TabButton active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} icon={<Calendar size={18} />} label="Timeline" />
             <TabButton active={activeTab === 'approvals'} onClick={() => setActiveTab('approvals')} icon={<Check size={18} />} label="Approvals" />
+            <TabButton active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<Shield size={18} />} label="Reports" />
           </div>
         </div>
 
@@ -62,8 +63,73 @@ export default function Admin() {
           {activeTab === 'gallery' && <GalleryManager />}
           {activeTab === 'timeline' && <TimelineManager />}
           {activeTab === 'approvals' && <ApprovalsManager />}
+          {activeTab === 'reports' && <ReportsManager />}
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+function ReportsManager() {
+  const [reports, setReports] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    // Join with posts and reporter
+    const { data } = await supabase.from('forum_reports')
+      .select('*, post:forum_posts(title, content), reporter:users(nickname)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+    if (data) setReports(data);
+  };
+
+  const resolveReport = async (id: string) => {
+    await supabase.from('forum_reports').update({ status: 'resolved' }).eq('id', id);
+    fetchReports();
+  };
+
+  const dismissReport = async (id: string) => {
+    await supabase.from('forum_reports').update({ status: 'dismissed' }).eq('id', id);
+    fetchReports();
+  };
+
+  const deletePost = async (postId: string, reportId: string) => {
+      if(!confirm('Delete this reported post?')) return;
+      await supabase.from('forum_posts').delete().eq('id', postId);
+      await resolveReport(reportId); // Auto resolve report as post is gone
+  };
+
+  return (
+    <div>
+      <h3 className="text-xl font-bold text-slate-700 mb-6 flex items-center gap-2"><Shield size={20} /> Reported Content</h3>
+      {reports.length === 0 ? <p className="text-slate-400 italic">No pending reports.</p> : (
+        <div className="space-y-4">
+          {reports.map(report => (
+            <div key={report.id} className="bg-white p-6 rounded-xl border border-red-100 shadow-sm">
+               <div className="flex gap-2 items-center mb-2">
+                   <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded uppercase">Report</span>
+                   <span className="text-slate-500 text-sm">by {report.reporter?.nickname || 'Unknown'}</span>
+                   <span className="text-slate-400 text-xs ml-auto">{new Date(report.created_at).toLocaleString()}</span>
+               </div>
+               <p className="font-bold text-slate-800 mb-1">Reason: <span className="text-red-500">{report.reason}</span></p>
+               
+               <div className="bg-slate-50 p-4 rounded-lg my-4 border border-slate-100">
+                   <h4 className="font-bold text-slate-700 mb-1">{report.post?.title || 'Post Deleted'}</h4>
+                   <p className="text-slate-600 text-sm line-clamp-2">{report.post?.content}</p>
+               </div>
+
+               <div className="flex gap-2 justify-end">
+                   <button onClick={() => dismissReport(report.id)} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-bold">Dismiss</button>
+                   <button onClick={() => resolveReport(report.id)} className="bg-green-100 text-green-600 px-4 py-2 rounded-lg font-bold hover:bg-green-200">Mark Resolved</button>
+                   <button onClick={() => deletePost(report.post_id, report.id)} className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 flex items-center gap-2"><Trash2 size={16} /> Delete Post</button>
+               </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -815,6 +881,7 @@ function TimelineManager() {
 function ApprovalsManager() {
   const [fanArt, setFanArt] = useState<MediaItem[]>([]);
   const [charms, setCharms] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
     fetchPending();
@@ -826,6 +893,9 @@ function ApprovalsManager() {
 
     const { data: ch } = await supabase.from('idol_charms').select('*').eq('is_approved', false);
     if (ch) setCharms(ch);
+
+    const { data: ps } = await supabase.from('forum_posts').select('*').eq('status', 'pending').order('created_at', { ascending: false });
+    if (ps) setPosts(ps);
   };
 
   const approveArt = async (id: string) => {
@@ -837,6 +907,11 @@ function ApprovalsManager() {
     await supabase.from('idol_charms').update({ is_approved: true }).eq('id', id);
     fetchPending();
   };
+
+  const approvePost = async (id: string) => {
+    await supabase.from('forum_posts').update({ status: 'approved' }).eq('id', id);
+    fetchPending();
+  };
   
   const deleteItem = async (table: string, id: string) => {
     if(!confirm('Reject/Delete this item?')) return;
@@ -846,6 +921,27 @@ function ApprovalsManager() {
 
   return (
     <div className="space-y-10">
+      <div>
+        <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2"><MessageSquare size={20} /> Pending Forum Posts</h3>
+        {posts.length === 0 ? <p className="text-slate-400 italic">No pending posts.</p> : (
+          <div className="space-y-4">
+            {posts.map(post => (
+              <div key={post.id} className="bg-white p-6 rounded-xl border border-pink-100 shadow-sm">
+                <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-slate-800 text-lg">{post.title}</h4>
+                    <span className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded">{post.category}</span>
+                </div>
+                <p className="text-slate-600 mb-4 line-clamp-3">{post.content}</p>
+                <div className="flex gap-2 justify-end">
+                  <button onClick={() => approvePost(post.id)} className="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 font-bold flex items-center gap-2"><Check size={16} /> Approve</button>
+                  <button onClick={() => deleteItem('forum_posts', post.id)} className="bg-red-100 text-red-600 px-4 py-2 rounded-lg hover:bg-red-200 font-bold flex items-center gap-2"><X size={16} /> Reject</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div>
         <h3 className="text-xl font-bold text-slate-700 mb-4 flex items-center gap-2"><ImageIcon size={20} /> Pending Fan Art</h3>
         {fanArt.length === 0 ? <p className="text-slate-400 italic">No pending fan art.</p> : (
