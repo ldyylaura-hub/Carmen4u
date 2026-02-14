@@ -1,6 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,6 +19,14 @@ html, body {
    So here we just ensure the native one is gone. */
 
 @layer utilities {
+  .dotgothic16-regular {
+    font-family: "DotGothic16", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+  .pixel-crisp {
+    image-rendering: pixelated;
+  }
   .backface-hidden {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -30,7 +35,100 @@ html, body {
     perspective: 1000px;
   }
   .font-handwriting {
-    font-family: 'Hachi Maru Pop', cursive;
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+  }
+}
+
+@layer components {
+  .kirby-pixel {
+    --k-bg: #fff0f6; /* More pinkish background */
+    --k-panel: #ffffff;
+    --k-ink: #1b1b1b;
+    --k-pink: #ff4fb8;
+    --k-pink-light: #ffe6f5; /* Light pink for backgrounds */
+    --k-pink-border: #ffb6e0; /* Pink border */
+    --k-pink-2: #ff8ad8;
+    --k-blue: #4fd6ff;
+    --k-warn: #ff5a5a;
+    background-color: var(--k-bg);
+    color: var(--k-ink);
+    text-rendering: geometricPrecision;
+  }
+  .kirby-pixel .pixel-bg {
+    background-color: var(--k-bg);
+    background-image:
+      linear-gradient(90deg, rgba(255, 79, 184, 0.08) 1px, transparent 1px),
+      linear-gradient(rgba(255, 79, 184, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .kirby-pixel .pixel-window {
+    background: var(--k-panel);
+    border: 3px solid var(--k-ink);
+    box-shadow: 10px 10px 0 var(--k-pink-2); /* Pink shadow */
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .kirby-pixel .pixel-titlebar {
+    border-bottom: 3px solid var(--k-ink);
+    background: var(--k-pink-light); /* Pink header */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .kirby-pixel .pixel-card {
+    background: var(--k-panel);
+    border: 3px solid var(--k-ink);
+    box-shadow: 6px 6px 0 var(--k-pink-border); /* Soft pink shadow */
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .kirby-pixel .pixel-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--k-pink); /* Hot pink shadow on hover */
+  }
+  .kirby-pixel .pixel-input {
+    background: #fffafa;
+    border: 3px solid var(--k-ink);
+    border-radius: 10px;
+    padding: 12px 14px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .kirby-pixel .pixel-input:focus {
+    background: #fff;
+    box-shadow: 4px 4px 0 var(--k-pink);
+    border-color: var(--k-ink);
+  }
+  .kirby-pixel .pixel-button {
+    border: 3px solid var(--k-ink);
+    border-radius: 10px;
+    box-shadow: 4px 4px 0 var(--k-pink); /* Pink shadow by default */
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+    background-color: #fff;
+  }
+  .kirby-pixel .pixel-button:hover {
+    background-color: var(--k-pink-light);
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 6px 0 var(--k-pink);
+  }
+  .kirby-pixel .pixel-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--k-ink);
+  }
+  .kirby-pixel .pixel-chip {
+    border: 2px solid var(--k-ink);
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-weight: 700;
+    background: var(--k-pink-light);
+    color: var(--k-pink);
+    box-shadow: 2px 2px 0 var(--k-pink-border);
+  }
+  .kirby-pixel .pixel-badge {
+    border: 2px solid var(--k-ink);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -66,5 +164,4 @@ html, body {
     @apply font-heading;
   }
 }
-
 

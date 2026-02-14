@@ -16,7 +16,7 @@ export default function Register() {
     setError(null);
 
     // 1. Sign up with metadata
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {

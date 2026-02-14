@@ -41,8 +41,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Hachi Maru Pop"', '"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
-        heading: ['"M PLUS Rounded 1c"', 'sans-serif'],
+        sans: ['"DotGothic16"', '"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
+        heading: ['"DotGothic16"', '"M PLUS Rounded 1c"', 'sans-serif'],
       }
     },
   },

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
-import { Upload, Calendar, Star, Trash2, Check, X, Image as ImageIcon, Video, Plus, Home, Layers, MessageSquare, Shield, GripVertical } from 'lucide-react';
-import { Album, MediaCategory, MediaItem } from '../types';
+import { Upload, Calendar, Star, Trash2, Check, X, Image as ImageIcon, Plus, Home, Layers, MessageSquare, Shield, GripVertical } from 'lucide-react';
+import { Album, MediaCategory, MediaItem, TimelineEvent, Charm } from '../types';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 export default function Admin() {
@@ -71,7 +71,15 @@ export default function Admin() {
 }
 
 function ReportsManager() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<Array<{
+    id: string;
+    created_at: string;
+    reason: string;
+    status: string;
+    post_id: string;
+    post?: { title: string; content: string } | null;
+    reporter?: { nickname: string } | null;
+  }>>([]);
 
   useEffect(() => {
     fetchReports();
@@ -165,7 +173,7 @@ function HomeManager() {
         const parsed = JSON.parse(data.value);
         if (Array.isArray(parsed)) setVideoUrls(parsed);
         else setVideoUrls([data.value]); // Backward compatibility
-      } catch (e) {
+      } catch {
         setVideoUrls([data.value]); // If not JSON, treat as single string
       }
     }
@@ -648,7 +656,7 @@ function UploadMediaForm({ albumId, onComplete }: { albumId: string; onComplete:
 
 // --- Timeline Manager ---
 function TimelineManager() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   
   // Form State
@@ -717,7 +725,7 @@ function TimelineManager() {
 
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
-  const startEditEvent = (event: any) => {
+  const startEditEvent = (event: TimelineEvent) => {
       setTitle(event.title);
       setDate(event.event_date);
       setDesc(event.description || '');
@@ -758,7 +766,7 @@ function TimelineManager() {
             if (editingEventId) {
                 // Update Logic
                 setUploading(true);
-                let updateData: any = {
+                const updateData: { title: string; event_date: string; description: string; album_id: string | null; cover_url?: string } = {
                     title, event_date: date, description: desc, album_id: albumId || null
                 };
                 
@@ -880,8 +888,8 @@ function TimelineManager() {
 // --- Approvals Manager ---
 function ApprovalsManager() {
   const [fanArt, setFanArt] = useState<MediaItem[]>([]);
-  const [charms, setCharms] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [charms, setCharms] = useState<Charm[]>([]);
+  const [posts, setPosts] = useState<Array<{ id: string; title: string; content: string; category: string }>>([]);
 
   useEffect(() => {
     fetchPending();

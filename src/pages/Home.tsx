@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, Mic2, Sparkles, Heart } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
@@ -27,7 +27,7 @@ export default function Home() {
           } else {
               setVideoUrls([data.value]);
           }
-        } catch (e) {
+        } catch {
           setVideoUrls([data.value]);
         }
       }

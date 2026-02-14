@@ -4,11 +4,12 @@ import { motion } from 'framer-motion';
 import { Menu, X, Sparkles, Shield } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ClickEffectSafe as ClickEffect } from './ClickEffect';
+import type { User } from '@supabase/supabase-js';
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
 
   // Custom Scroll Progress Bar

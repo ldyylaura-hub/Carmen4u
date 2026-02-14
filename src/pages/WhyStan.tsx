@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, Heart, Star, Award, Play, Sparkles, MapPin, Calendar, Clock, User, Smile, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Music, Play, Sparkles, MapPin, Calendar, Clock, User, Smile, Plus, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface Charm {
@@ -24,9 +24,6 @@ export default function WhyStan() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselImages, setCarouselImages] = useState<{ src: string, label: string }[]>([]);
   
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
   
   useEffect(() => {
     fetchCharms();
@@ -81,7 +78,7 @@ export default function WhyStan() {
 
   const fetchCharms = async () => {
     // 1. Get user generated charms
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('idol_charms')
       .select('*')
       .eq('is_approved', true);
@@ -111,8 +108,6 @@ export default function WhyStan() {
     setCharms(shuffled.slice(0, 5));
   };
 
-  // Pagination is now effectively disabled or just showing 1 page of 5 random items
-  const totalPages = 1; 
   const currentCharms = charms; 
 
   /* 
@@ -169,7 +164,7 @@ export default function WhyStan() {
           <div className="inline-block px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-md text-pink-600 font-bold text-sm mb-4 border border-pink-200/50 shadow-sm">
             ♡⊹ ˖ 𓏴 𝒪𝓊𝓇 ℯ𝓍𝒸𝓁𝓊𝓈𝒾𝓋ℯ 𝓂ℯ𝓂ℴ𝓇𝒾ℯ𝓈 𓏴 ˖ ⊹♡
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-slate-800 drop-shadow-sm">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-slate-800 drop-shadow-sm dotgothic16-regular">
             安利手册 <span className="text-4xl">🌴</span>
           </h1>
           <p className="text-slate-600 text-lg font-medium">Everything you need to know about Carmen.</p>
@@ -177,16 +172,13 @@ export default function WhyStan() {
 
         {/* Full Width Scrolling Carousel */}
         {carouselImages.length > 0 && (
-          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-10 group">
-             {/* Background Decoration */}
-             <div className="absolute inset-0 bg-gradient-to-r from-pink-50/0 via-pink-50/30 to-pink-50/0 pointer-events-none" />
-             
+          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group">
              {/* Decorative Text Background */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm">
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm dotgothic16-regular">
                 CARMEN
              </div>
 
-             <div className="relative z-10 flex gap-10 overflow-hidden items-center h-[400px]">
+             <div className="relative z-10 flex gap-10 overflow-x-auto items-center h-[550px] md:h-[500px] no-scrollbar">
                <motion.div 
                  className="flex gap-10 flex-nowrap pl-10"
                  animate={{ x: ["0%", "-50%"] }}
@@ -195,27 +187,31 @@ export default function WhyStan() {
                    ease: "linear", 
                    duration: 40 
                  }}
+                 style={{ width: "max-content" }}
+                 whileHover={{ animationPlayState: "paused" }} 
+                 drag="x"
+                 dragConstraints={{ left: -1000, right: 0 }} 
                >
                  {/* Duplicate list multiple times to ensure seamless infinite scroll */}
                  {[...carouselImages, ...carouselImages, ...carouselImages, ...carouselImages].map((item, index) => (
                    <div 
                      key={index} 
-                     className="w-[80vw] max-w-[300px] md:w-[340px] bg-white p-4 pb-14 shadow-2xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card"
+                     className="w-[240px] md:w-[320px] bg-white p-4 pb-12 shadow-xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card cursor-grab active:cursor-grabbing"
                      style={{
                        transform: `rotate(${index % 2 === 0 ? '3deg' : '-3deg'}) translateY(${index % 3 * 10}px)`,
                        borderRadius: '2px'
                      }}
                    >
                      {/* Tape effect */}
-                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-10 bg-white/20 backdrop-blur-sm border-l border-r border-white/30 shadow-sm rotate-1 z-10 opacity-70" />
+                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-28 h-9 bg-white/20 backdrop-blur-sm border-l border-r border-white/30 shadow-sm rotate-1 z-10 opacity-70" />
                      
                      <div className="w-full aspect-[3/4] overflow-hidden bg-gray-100 mb-3 relative">
                        <img src={item.src} alt={item.label} className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-105" />
                        <div className="absolute inset-0 bg-pink-500/0 group-hover/card:bg-pink-500/10 transition-colors duration-300" />
                      </div>
                      
-                     <div className="absolute bottom-4 left-0 right-0 text-center px-2">
-                       <span className="font-handwriting text-slate-700 font-bold text-xl rotate-1 inline-block truncate w-full">
+                     <div className="absolute bottom-3 left-0 right-0 text-center px-2">
+                       <span className="font-handwriting text-slate-700 font-bold text-lg rotate-1 inline-block truncate w-full">
                          {item.label} 💖
                        </span>
                      </div>
@@ -261,7 +257,7 @@ export default function WhyStan() {
           className="mb-24"
         >
           <div className="text-center mb-10">
-             <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3">
+             <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 dotgothic16-regular">
                <span>₊⁺ ♡̶ꗯ꙼̈๑⃙⃘₊⁺</span>
                TMI 🌴
                <span>₊⁺ ♡̶ꗯ꙼̈๑⃙⃘₊⁺</span>
@@ -280,9 +276,9 @@ export default function WhyStan() {
         </motion.div>
 
         {/* Charms Section (UGC) */}
-        <div className="mb-24">
+        <div className="mb-24 mt-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3">
+            <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 dotgothic16-regular">
                <span>✨</span>
                卡门的小小闪光点
                <span>✨</span>
@@ -290,12 +286,14 @@ export default function WhyStan() {
             <p className="text-pink-600 mt-2 font-medium">点击右下角添加你发现的卡门魅力！</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-[1400px] mx-auto px-4 place-items-center">
-            <AnimatePresence mode='wait'>
-              {currentCharms.map((charm, index) => (
-                <CharmCard key={charm.id} content={charm.content} index={index} />
-              ))}
-            </AnimatePresence>
+          <div className="flex w-full overflow-x-auto overflow-y-hidden pb-8 px-4 snap-x snap-mandatory">
+            <div className="flex flex-nowrap gap-4 min-w-min mx-auto">
+              <AnimatePresence mode='wait'>
+                {currentCharms.map((charm, index) => (
+                  <CharmCard key={charm.id} content={charm.content} index={index} />
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Pagination Controls - Hidden as requested */}
@@ -391,7 +389,7 @@ export default function WhyStan() {
 
         {/* Vocal Showcase */}
         <div className="bg-pink-100/40 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/50 shadow-xl">
-          <h2 className="text-3xl font-bold mb-10 text-center flex items-center justify-center gap-3 text-slate-800">
+          <h2 className="text-3xl font-bold mb-10 text-center flex items-center justify-center gap-3 text-slate-800 dotgothic16-regular">
             <Music className="text-pink-500" /> Discography & Vocal Showcase
           </h2>
           
@@ -466,7 +464,7 @@ function CharmCard({ content, index }: { content: string, index: number }) {
 
   return (
     <div 
-      className="w-[75vw] max-w-[280px] aspect-[3/4] md:w-64 md:h-[340px] cursor-pointer group perspective-1000"
+      className="w-[160px] md:w-64 aspect-[3/4] cursor-pointer group perspective-1000 flex-shrink-0 snap-center"
       onClick={() => setIsFlipped(!isFlipped)}
       style={{ perspective: '1000px' }}
     >
@@ -486,13 +484,13 @@ function CharmCard({ content, index }: { content: string, index: number }) {
             backgroundImage: `url('${dollImage}')`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center bottom',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden'
           }}
         >
-          {/* Optional: "Click Me" hint on hover */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Optional: "Click Me" hint on hover - hidden on mobile */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden md:flex">
             <span className="bg-white/80 px-3 py-1 rounded-full text-pink-500 text-sm font-bold shadow-sm">Click Me!</span>
           </div>
         </div>
@@ -504,7 +502,7 @@ function CharmCard({ content, index }: { content: string, index: number }) {
             backgroundImage: `url('${dollImage}')`,
             backgroundSize: 'contain',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
+            backgroundPosition: 'center bottom',
             transform: 'rotateY(180deg)',
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden'
@@ -517,17 +515,17 @@ function CharmCard({ content, index }: { content: string, index: number }) {
                backgroundImage: `url('${dollImage}')`,
                backgroundSize: 'contain',
                backgroundRepeat: 'no-repeat',
-               backgroundPosition: 'center',
+               backgroundPosition: 'center bottom',
                filter: 'brightness(0) invert(1)', // Turns it white
                opacity: 0.9
              }}
           />
           
           {/* Content Container - Centered */}
-          <div className="absolute inset-0 flex items-center justify-center p-10 z-10">
-            <div className="text-center">
-              <span className="text-pink-600 font-bold text-xl md:text-2xl drop-shadow-sm leading-relaxed block mb-2">{content}</span>
-              <Sparkles className="inline-block text-yellow-400 w-6 h-6 animate-pulse" />
+          <div className="absolute inset-0 flex items-center justify-center p-4 md:p-10 z-10">
+            <div className="text-center w-full">
+              <span className="text-pink-600 font-bold text-sm md:text-2xl drop-shadow-sm leading-tight block mb-1 md:mb-2 line-clamp-6 md:line-clamp-none overflow-hidden">{content}</span>
+              <Sparkles className="inline-block text-yellow-400 w-4 h-4 md:w-6 md:h-6 animate-pulse" />
             </div>
           </div>
         </div>

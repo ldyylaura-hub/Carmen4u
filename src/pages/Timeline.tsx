@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { Calendar, Star, Music, Award, Gift, ShoppingBag, Trophy, ExternalLink } from 'lucide-react';
+import { Calendar, Star, Music, Gift, ShoppingBag, Trophy, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface TimelineEvent {
@@ -169,7 +169,13 @@ function TimelineItem({ event, index }: { event: TimelineEvent; index: number })
   );
 }
 
-function ContentCard({ event, styles }: { event: TimelineEvent, styles: any }) {
+function ContentCard({
+  event,
+  styles,
+}: {
+  event: TimelineEvent
+  styles: { color: string; bg: string; border: string; icon: ReactNode }
+}) {
   const displayImage = event.cover_url || event.image_url;
 
   return (

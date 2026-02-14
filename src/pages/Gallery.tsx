@@ -185,19 +185,19 @@ export default function Gallery() {
 }
 
 function MediaItemCard({ item }: { item: MediaItem }) {
+  const era = typeof item.metadata?.['era'] === 'string' ? item.metadata['era'] : undefined
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all group">
       {item.type === 'video' ? (
         <div className="aspect-video relative bg-black">
-           {/* @ts-ignore */}
            <ReactPlayer 
-             // @ts-ignore
+             // @ts-expect-error react-player types mismatch in this setup
              url={item.url} 
              width="100%" 
              height="100%" 
              controls
-             // @ts-ignore
-             light={item.thumbnail_url || true}
+             light={item.thumbnail_url ?? true}
              playIcon={
                 <div className="w-16 h-16 bg-pink-500/90 rounded-full flex items-center justify-center group-hover:bg-pink-600 transition-colors backdrop-blur-sm shadow-lg">
                   <Play className="w-8 h-8 text-white ml-1" />
@@ -212,7 +212,7 @@ function MediaItemCard({ item }: { item: MediaItem }) {
       )}
       <div className="p-4">
         <h4 className="font-bold text-slate-800 truncate">{item.title}</h4>
-        {item.metadata?.era && <p className="text-xs text-pink-500 font-bold uppercase mt-1">{item.metadata.era}</p>}
+        {era && <p className="text-xs text-pink-500 font-bold uppercase mt-1">{era}</p>}
       </div>
     </div>
   );

@@ -28,7 +28,7 @@ export interface MediaItem {
   title: string;
   url: string;
   thumbnail_url?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   status: 'approved' | 'pending' | 'rejected';
   display_order: number;
   created_at: string;
@@ -69,11 +69,13 @@ export interface ForumPost {
   category: string;
   view_count: number;
   like_count: number;
+  is_pinned?: boolean;
   created_at: string;
   updated_at: string;
   user?: {
     nickname: string;
     avatar_url?: string;
+    role?: 'user' | 'admin';
   };
   replies?: { count: number }[]; // For count aggregation
   image_urls?: string[];
