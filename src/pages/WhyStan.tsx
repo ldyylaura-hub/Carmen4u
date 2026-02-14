@@ -189,7 +189,7 @@ export default function WhyStan() {
 
         {/* Full Width Scrolling Carousel */}
         {carouselImages.length > 0 && (
-          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group -mt-10">
+          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group -mt-20">
              {/* Decorative Text Background */}
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm font-round">
                 CARMEN
@@ -204,7 +204,7 @@ export default function WhyStan() {
                  {[...carouselImages, ...carouselImages].map((item, index) => (
                    <div 
                      key={index} 
-                     className="w-[240px] md:w-[320px] bg-white p-4 pb-12 shadow-xl flex-shrink-0 transform transition-transform duration-500 hover:scale-105 relative group/card"
+                     className="w-[240px] md:w-[320px] bg-white p-4 pb-10 shadow-xl flex-shrink-0 transform transition-transform duration-500 hover:scale-105 relative group/card"
                      style={{
                        transform: `rotate(${index % 2 === 0 ? '2deg' : '-2deg'}) translateY(${index % 3 * 5}px)`,
                        borderRadius: '2px',
@@ -219,8 +219,8 @@ export default function WhyStan() {
                        <div className="absolute inset-0 bg-pink-500/0 group-hover/card:bg-pink-500/10 transition-colors duration-300" />
                      </div>
                      
-                     <div className="absolute bottom-3 left-0 right-0 text-center px-2">
-                       <span className="font-handwriting text-slate-700 font-bold text-lg rotate-1 inline-block truncate w-full mt-4">
+                     <div className="absolute bottom-6 left-0 right-0 text-center px-2">
+                       <span className="font-handwriting text-slate-700 font-bold text-lg rotate-1 inline-block truncate w-full">
                          {item.label} 💖
                        </span>
                      </div>
@@ -531,7 +531,7 @@ function CharmCard({ content, index }: { content: string, index: number }) {
           />
           
           {/* Content Container - Centered */}
-          <div className="absolute inset-0 flex items-center justify-center p-4 md:p-10 z-10">
+          <div className="absolute inset-0 flex items-start justify-center p-4 pt-8 md:p-10 md:pt-16 z-10">
             <div className="text-center w-full">
               <span className="text-pink-600 font-bold text-sm md:text-2xl drop-shadow-sm leading-tight block mb-1 md:mb-2 line-clamp-6 md:line-clamp-none overflow-hidden">{content}</span>
               <Sparkles className="inline-block text-yellow-400 w-4 h-4 md:w-6 md:h-6 animate-pulse" />
