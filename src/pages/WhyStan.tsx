@@ -141,14 +141,18 @@ export default function WhyStan() {
     if (!newCharmText.trim()) return;
 
     setIsSubmitting(true);
+    // Insert with is_approved = false (requires admin approval)
     const { error } = await supabase
       .from('idol_charms')
-      .insert([{ content: newCharmText }]);
+      .insert([{ content: newCharmText, is_approved: false }]);
 
     if (!error) {
       setNewCharmText('');
       setShowAddCharm(false);
-      fetchCharms(); // Refresh list
+      alert('安利发送成功！请等待管理员审核 ✨');
+      // Do NOT fetchCharms() immediately, as the new item is not approved yet
+    } else {
+      alert('发送失败，请稍后再试');
     }
     setIsSubmitting(false);
   };
@@ -185,7 +189,7 @@ export default function WhyStan() {
 
         {/* Full Width Scrolling Carousel */}
         {carouselImages.length > 0 && (
-          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group">
+          <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group -mt-10">
              {/* Decorative Text Background */}
              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm font-round">
                 CARMEN
@@ -216,7 +220,7 @@ export default function WhyStan() {
                      </div>
                      
                      <div className="absolute bottom-3 left-0 right-0 text-center px-2">
-                       <span className="font-handwriting text-slate-700 font-bold text-lg rotate-1 inline-block truncate w-full">
+                       <span className="font-handwriting text-slate-700 font-bold text-lg rotate-1 inline-block truncate w-full mt-4">
                          {item.label} 💖
                        </span>
                      </div>
