@@ -50,8 +50,9 @@ export default function Home() {
             key={videoUrls[currentVideoIndex]} // Key change forces re-render for new source
             src={videoUrls[currentVideoIndex]}
             autoPlay
-            muted 
-            playsInline
+            muted={true}
+            loop={videoUrls.length === 1}
+            playsInline={true}
             onEnded={handleVideoEnded}
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
