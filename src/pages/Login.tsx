@@ -22,7 +22,13 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      navigate('/community');
+      // Check if admin after login
+      const { data } = await supabase.rpc('is_admin');
+      if (data) {
+        navigate('/admin');
+      } else {
+        navigate('/community');
+      }
     }
     setLoading(false);
   };
