@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User } from '@supabase/supabase-js'
+import { useNavigate } from 'react-router-dom'
 import { ForumPost } from '../types'
 import PixelWindow from '../components/pixel/PixelWindow'
 import ForumList from '../components/forum/ForumList'
@@ -20,6 +21,7 @@ export default function Community() {
   const [user, setUser] = useState<User | null>(null);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const navigate = useNavigate();
   
   // View State: 'home' | 'list' | 'create' | 'detail' | 'profile'
   // 'home' is the new BBS index page. 'list' is the full searchable list.
@@ -105,6 +107,7 @@ export default function Community() {
             setUser(authUser);
         } else {
             setUser(null);
+            navigate('/login'); // Redirect to login if not authenticated
         }
     });
 
@@ -122,6 +125,7 @@ export default function Community() {
             setUser(authUser);
         } else {
             setUser(null);
+            navigate('/login'); // Redirect on logout or session expiration
         }
     });
     

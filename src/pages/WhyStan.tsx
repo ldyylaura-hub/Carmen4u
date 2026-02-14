@@ -159,47 +159,39 @@ export default function WhyStan() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-12 font-handwriting"
         >
           <div className="inline-block px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-md text-pink-600 font-bold text-sm mb-4 border border-pink-200/50 shadow-sm">
             ♡⊹ ˖ 𓏴 𝒪𝓊𝓇 ℯ𝓍𝒸𝓁𝓊𝓈𝒾𝓋ℯ 𝓂ℯ𝓂ℴ𝓇𝒾ℯ𝓈 𓏴 ˖ ⊹♡
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-slate-800 drop-shadow-sm dotgothic16-regular">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 text-slate-800 drop-shadow-sm font-round">
             安利手册 <span className="text-4xl">🌴</span>
           </h1>
-          <p className="text-slate-600 text-lg font-medium">Everything you need to know about Carmen.</p>
+          <p className="text-slate-600 text-lg font-medium font-handwriting text-xl">Everything you need to know about Carmen.</p>
         </motion.div>
 
         {/* Full Width Scrolling Carousel */}
         {carouselImages.length > 0 && (
           <div className="mb-24 relative w-screen ml-[calc(50%-50vw)] overflow-hidden py-16 group">
              {/* Decorative Text Background */}
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm dotgothic16-regular">
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[12rem] md:text-[20rem] font-black text-pink-200/20 whitespace-nowrap select-none pointer-events-none z-0 mix-blend-overlay blur-sm font-round">
                 CARMEN
              </div>
 
-             <div className="relative z-10 flex gap-10 overflow-x-auto items-center h-[550px] md:h-[500px] no-scrollbar">
-               <motion.div 
-                 className="flex gap-10 flex-nowrap pl-10"
-                 animate={{ x: ["0%", "-50%"] }}
-                 transition={{ 
-                   repeat: Infinity, 
-                   ease: "linear", 
-                   duration: 40 
-                 }}
+             <div className="relative z-10 flex gap-10 overflow-x-hidden items-center h-[550px] md:h-[500px] no-scrollbar">
+               <div 
+                 className="flex gap-10 flex-nowrap pl-10 animate-scroll-x"
                  style={{ width: "max-content" }}
-                 whileHover={{ animationPlayState: "paused" }} 
-                 drag="x"
-                 dragConstraints={{ left: -1000, right: 0 }} 
                >
                  {/* Duplicate list multiple times to ensure seamless infinite scroll */}
-                 {[...carouselImages, ...carouselImages, ...carouselImages, ...carouselImages].map((item, index) => (
+                 {[...carouselImages, ...carouselImages].map((item, index) => (
                    <div 
                      key={index} 
-                     className="w-[240px] md:w-[320px] bg-white p-4 pb-12 shadow-xl flex-shrink-0 transform transition-all duration-500 hover:scale-110 hover:z-30 hover:-rotate-0 relative group/card cursor-grab active:cursor-grabbing"
+                     className="w-[240px] md:w-[320px] bg-white p-4 pb-12 shadow-xl flex-shrink-0 transform transition-transform duration-500 hover:scale-105 relative group/card"
                      style={{
-                       transform: `rotate(${index % 2 === 0 ? '3deg' : '-3deg'}) translateY(${index % 3 * 10}px)`,
-                       borderRadius: '2px'
+                       transform: `rotate(${index % 2 === 0 ? '2deg' : '-2deg'}) translateY(${index % 3 * 5}px)`,
+                       borderRadius: '2px',
+                       willChange: 'transform'
                      }}
                    >
                      {/* Tape effect */}
@@ -217,7 +209,7 @@ export default function WhyStan() {
                      </div>
                    </div>
                  ))}
-               </motion.div>
+               </div>
              </div>
           </div>
         )}
@@ -227,9 +219,9 @@ export default function WhyStan() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-pink-100/40 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/50 mb-24 max-w-4xl mx-auto hover:bg-pink-100/50 transition-colors duration-500"
+          className="bg-pink-100/40 backdrop-blur-md rounded-3xl p-8 shadow-xl border border-white/50 mb-24 max-w-4xl mx-auto hover:bg-pink-100/50 transition-colors duration-500 font-handwriting text-lg"
         >
-           <h3 className="text-3xl font-bold text-slate-800 mb-8 flex items-center justify-center gap-3">
+           <h3 className="text-3xl font-bold text-slate-800 mb-8 flex items-center justify-center gap-3 font-round">
              <User className="text-pink-500 w-8 h-8" /> Basic Profile
            </h3>
            
@@ -257,14 +249,14 @@ export default function WhyStan() {
           className="mb-24"
         >
           <div className="text-center mb-10">
-             <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 dotgothic16-regular">
+             <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 font-round">
                <span>₊⁺ ♡̶ꗯ꙼̈๑⃙⃘₊⁺</span>
                TMI 🌴
                <span>₊⁺ ♡̶ꗯ꙼̈๑⃙⃘₊⁺</span>
              </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 font-handwriting text-lg">
             <TmiCard number={1} content="Carmen的父母是巴厘岛非常著名的音乐家，她来自一个音乐家庭 🎵" />
             <TmiCard number={2} content="会弹奏钢琴🎹和吉他🎸，唱歌很棒，是全能音乐人" />
             <TmiCard number={3} content="哥哥是厨师👨‍🍳，姐姐是Kpop死忠粉。家人经常飞往韩国支持她！" />
@@ -278,16 +270,16 @@ export default function WhyStan() {
         {/* Charms Section (UGC) */}
         <div className="mb-24 mt-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 dotgothic16-regular">
+            <h2 className="text-3xl font-bold text-slate-800 inline-flex items-center gap-3 font-round">
                <span>✨</span>
                卡门的小小闪光点
                <span>✨</span>
             </h2>
-            <p className="text-pink-600 mt-2 font-medium">点击右下角添加你发现的卡门魅力！</p>
+            <p className="text-pink-600 mt-2 font-medium font-handwriting text-lg">点击右下角添加你发现的卡门魅力！</p>
           </div>
 
           <div className="flex w-full overflow-x-auto overflow-y-hidden pb-8 px-4 snap-x snap-mandatory">
-            <div className="flex flex-nowrap gap-4 min-w-min mx-auto">
+            <div className="flex flex-nowrap gap-4 min-w-min mx-auto font-handwriting">
               <AnimatePresence mode='wait'>
                 {currentCharms.map((charm, index) => (
                   <CharmCard key={charm.id} content={charm.content} index={index} />
@@ -388,8 +380,8 @@ export default function WhyStan() {
         )}
 
         {/* Vocal Showcase */}
-        <div className="bg-pink-100/40 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/50 shadow-xl">
-          <h2 className="text-3xl font-bold mb-10 text-center flex items-center justify-center gap-3 text-slate-800 dotgothic16-regular">
+        <div className="bg-pink-100/40 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-white/50 shadow-xl font-handwriting">
+          <h2 className="text-3xl font-bold mb-10 text-center flex items-center justify-center gap-3 text-slate-800 font-round">
             <Music className="text-pink-500" /> Discography & Vocal Showcase
           </h2>
           

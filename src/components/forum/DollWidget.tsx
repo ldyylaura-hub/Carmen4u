@@ -28,36 +28,29 @@ export default function DollWidget() {
   const mouseY = useMotionValue(0);
   
   // Smooth spring animation for the parallax effect
-  const rotateX = useSpring(useTransform(mouseY, [-500, 500], [10, -10]), { stiffness: 150, damping: 20 });
-  const rotateY = useSpring(useTransform(mouseX, [-500, 500], [-10, 10]), { stiffness: 150, damping: 20 });
+  const rotateX = useSpring(useTransform(mouseY, [-500, 500], [5, -5]), { stiffness: 50, damping: 20 });
+  const rotateY = useSpring(useTransform(mouseX, [-500, 500], [-5, 5]), { stiffness: 50, damping: 20 });
 
   useEffect(() => {
+    let ticking = false;
     const handleMouseMove = (e: MouseEvent) => {
-      // Calculate mouse position relative to window center
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      mouseX.set(e.clientX - centerX);
-      mouseY.set(e.clientY - centerY);
-    };
-
-    const handleElementHover = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const tagName = target.tagName;
-      
-      if (CONTEXT_MESSAGES[tagName]) {
-        const msgs = CONTEXT_MESSAGES[tagName];
-        const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
-        setMessage(randomMsg);
-        setIsVisible(true);
-        // Reset timer
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => setIsVisible(false), 4000);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Calculate mouse position relative to window center
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          mouseX.set(e.clientX - centerX);
+          mouseY.set(e.clientY - centerY);
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
+    // Removed the global mouseover listener to improve performance
+    // Instead, we will rely on internal hover/click events or a less aggressive approach
+
     window.addEventListener('mousemove', handleMouseMove);
-    // Attach to body for capturing bubble events
-    document.body.addEventListener('mouseover', handleElementHover);
 
     // Initial message
     setMessage(IDLE_MESSAGES[0]);
@@ -77,7 +70,6 @@ export default function DollWidget() {
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      document.body.removeEventListener('mouseover', handleElementHover);
       clearTimeout(initialTimer);
       clearInterval(idleInterval);
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -140,19 +132,10 @@ export default function DollWidget() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <motion.img 
+        <img 
           src="https://kzqqwvwfyvpghvawxpnv.supabase.co/storage/v1/object/sign/picture/doll.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8wZTk4NjdjNC00OTg0LTRiNzItYmMxNS1jNWVmNjljOThmOTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJwaWN0dXJlL2RvbGwucG5nIiwiaWF0IjoxNzcxMDkzNjg0LCJleHAiOjE5Mjg3NzM2ODR9.2on-OKLQ6Kg2AmjwIUbRglVB-Ec6dRAkMHeQPiGUhRc" 
           alt="Mascot" 
-          className="w-full h-full object-contain drop-shadow-xl"
-          animate={{ 
-            y: [0, -8, 0],
-            scale: [1, 1.02, 1] 
-          }}
-          transition={{ 
-            duration: 4, 
-            repeat: Infinity, 
-            ease: "easeInOut" 
-          }}
+          className="w-full h-full object-contain drop-shadow-xl animate-float-breath"
         />
       </motion.div>
     </div>

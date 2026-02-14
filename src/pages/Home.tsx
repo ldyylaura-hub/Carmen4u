@@ -44,7 +44,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-pink-200">
         {videoUrls.length > 0 ? (
           <video 
             key={videoUrls[currentVideoIndex]} // Key change forces re-render for new source
@@ -213,15 +213,13 @@ function FlipCharmCard({ content, index }: { content: string, index: number }) {
         {/* Front Side: Just the Doll Image */}
         <div 
           className="absolute inset-0 w-full h-full backface-hidden rounded-2xl shadow-xl overflow-hidden bg-pink-50"
-          style={{ 
-            backgroundImage: `url('${dollImage}')`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden'
-          }}
         >
+          <img 
+             src={dollImage} 
+             alt="Back" 
+             className="w-full h-full object-contain object-center"
+             loading="lazy"
+          />
           {/* Optional: "Click Me" hint on hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/10">
             <span className="bg-white/90 px-4 py-2 rounded-full text-pink-500 text-sm font-bold shadow-sm">Click to Flip! ✨</span>
