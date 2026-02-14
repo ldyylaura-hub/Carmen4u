@@ -35,6 +35,22 @@ export default function Home() {
     fetchVideo();
   }, []);
 
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true; // Crucial for some browsers
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(err => {
+        console.error("Autoplay prevented:", err);
+        // If autoplay fails, we might want to show a play button or fallback, 
+        // but for now let's just log it. 
+        // Modern browsers usually allow muted autoplay.
+      });
+    }
+  }, [currentVideoIndex, videoUrls]);
+
   const handleVideoEnded = () => {
     if (videoUrls.length > 1) {
         setCurrentVideoIndex((prev) => (prev + 1) % videoUrls.length);
@@ -45,15 +61,17 @@ export default function Home() {
     <div>
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-pink-200">
-        {videoUrls.length > 0 ? (
+        {videoUrls.length > 0 && !videoError ? (
           <video 
+            ref={videoRef}
             key={videoUrls[currentVideoIndex]} // Key change forces re-render for new source
             src={videoUrls[currentVideoIndex]}
             autoPlay
-            muted={true}
+            muted
             loop={videoUrls.length === 1}
-            playsInline={true}
+            playsInline
             onEnded={handleVideoEnded}
+            onError={() => setVideoError(true)}
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
         ) : (
