@@ -84,6 +84,16 @@ export default function Layout() {
                 }`} />
               </Link>
             ))}
+            {/* Show login/admin status in nav */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="text-sm font-bold text-pink-600 hover:text-pink-700 transition-all flex items-center gap-1"
+              >
+                <Shield size={16} />
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
