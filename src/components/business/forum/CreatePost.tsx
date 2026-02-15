@@ -59,66 +59,91 @@ export default function CreatePost({ user, initialCategory, onCancel, onSuccess 
     }
 
     setSubmitting(true)
-    const imageUrls: string[] = []
 
-    if (images.length > 0) {
-      for (let i = 0; i < images.length; i++) {
-        const file = images[i]
-        const fileExt = file.name.split('.').pop()
-        const filePath = `posts/${user.id}-${Date.now()}-${i}.${fileExt}`
-        
-        // Use gallery_uploads bucket first (public), fallback to media
-        let uploadBucket = 'gallery_uploads';
-        let { error: uploadError } = await supabase.storage.from(uploadBucket).upload(filePath, file);
-        
-        if (uploadError) {
-             // Fallback
-             uploadBucket = 'media';
-             const { error: retryError } = await supabase.storage.from(uploadBucket).upload(filePath, file);
-             if (retryError) {
-                 // Try forum_images as last resort
-                 uploadBucket = 'forum_images';
-                 const { error: lastError } = await supabase.storage.from(uploadBucket).upload(filePath, file);
-                 if (lastError) continue; // Skip this image
-             }
+    // Helper for timeout
+    const withTimeout = <T,>(promise: PromiseLike<T>, ms: number = 20000): Promise<T> => {
+      return Promise.race([
+        Promise.resolve(promise),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timed out. Please check your connection.')), ms))
+      ]);
+    };
+
+    try {
+      const imageUrls: string[] = []
+
+      // 1. Upload Images (if any)
+      if (images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          const file = images[i]
+          const fileExt = file.name.split('.').pop()
+          const filePath = `posts/${user.id}-${Date.now()}-${i}.${fileExt}`
+          
+          let uploadBucket = 'gallery_uploads';
+          
+          try {
+            // Attempt upload with timeout
+            const { error: uploadError } = await withTimeout(
+              supabase.storage.from(uploadBucket).upload(filePath, file)
+            );
+            
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage.from(uploadBucket).getPublicUrl(filePath)
+            imageUrls.push(data.publicUrl)
+          } catch (uploadErr) {
+             console.error('Image upload failed, skipping:', uploadErr);
+             // Optionally: throw error to stop post creation if images are mandatory
+             // or continue without the failed image
+          }
         }
-
-        const { data } = supabase.storage.from(uploadBucket).getPublicUrl(filePath)
-        imageUrls.push(data.publicUrl)
       }
-    }
 
-    // Determine status: Admin posts are auto-approved, others are pending
-    const postStatus = user?.user_metadata?.role === 'admin' ? 'approved' : 'pending';
+      // 2. Insert Post to Database
+      // Determine status: Admin posts are auto-approved, others are pending
+      const postStatus = user?.user_metadata?.role === 'admin' ? 'approved' : 'pending';
 
-    const { error } = await supabase.from('forum_posts').insert({
-      user_id: user.id,
-      title,
-      content,
-      category,
-      image_urls: imageUrls,
-      tags,
-      status: postStatus,
-    })
+      const { error } = await withTimeout(supabase.from('forum_posts').insert({
+        user_id: user.id,
+        title,
+        content,
+        category,
+        image_urls: imageUrls,
+        tags,
+        status: postStatus,
+      }));
 
-    if (error) {
-      alert(`Error creating post: ${error.message}`)
+      if (error) {
+        throw error;
+      }
+
+      // 3. Update User Metadata (Fire and forget, non-blocking)
+      supabase.auth.updateUser({
+        data: { post_count: (user.user_metadata?.post_count || 0) + 1 }
+      }).catch(err => console.warn('Failed to update post count:', err));
+      
+      // 4. Reset UI State
+      setSubmitting(false);
+
+      // 5. User Feedback
+      if (postStatus === 'pending') {
+        alert('Post submitted successfully! It will be visible after admin approval.');
+      } else {
+        // Optional: toast or simpler feedback for admins
+      }
+      
+      // 6. Navigate Back (Async to allow React state updates to flush)
+      setTimeout(() => {
+        onSuccess();
+      }, 50);
+
+    } catch (err: any) {
+      console.error('Submission error:', err);
+      // Only show alert if it's a real error, not just a network abort
+      if (err.message !== 'The user aborted a request.') {
+          alert(`Error creating post: ${err.message || 'Unknown error'}`);
+      }
       setSubmitting(false)
-      return
     }
-
-    // Update local post count metadata for immediate feedback
-    const currentCount = user.user_metadata?.post_count || 0;
-    await supabase.auth.updateUser({
-      data: { post_count: currentCount + 1 }
-    });
-    
-    if (postStatus === 'pending') {
-      alert('Post submitted successfully! It will be visible after admin approval.');
-    }
-    
-    setSubmitting(false)
-    onSuccess()
   }
 
   return (
