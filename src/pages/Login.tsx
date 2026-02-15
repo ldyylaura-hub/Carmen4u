@@ -14,11 +14,19 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
+    // Helper for timeout
+    const withTimeout = <T,>(promise: PromiseLike<T>, ms: number = 10000): Promise<T> => {
+      return Promise.race([
+        Promise.resolve(promise),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Request timed out. Please check your connection.')), ms))
+      ]);
+    };
+
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { data: authData, error: authError } = await withTimeout(supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      }));
 
       if (authError) {
         console.error('Login error:', authError);
@@ -33,23 +41,22 @@ export default function Login() {
         return;
       }
 
-      // Check if admin after login - fail safely
+      // Check if admin after login - fail safely with timeout
       try {
-        const { data } = await supabase.rpc('is_admin');
+        const { data } = await withTimeout(supabase.rpc('is_admin'), 5000); // 5s timeout for admin check
         if (data) {
-          navigate('/admin');
+          window.location.href = '/admin'; // Force full reload for admin
         } else {
-          navigate('/community');
+          window.location.href = '/community'; // Force full reload for user
         }
       } catch (rpcError) {
         console.error('RPC Error (is_admin):', rpcError);
-        // Fallback to community if RPC fails
-        navigate('/community');
+        // Fallback to community if RPC fails or times out
+        window.location.href = '/community';
       }
     } catch (err: any) {
       console.error('Unexpected error during login:', err);
       setError(err.message || 'An unexpected error occurred');
-    } finally {
       setLoading(false);
     }
   };
