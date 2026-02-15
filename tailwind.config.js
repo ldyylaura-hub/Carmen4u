@@ -41,8 +41,9 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"DotGothic16"', '"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
-        heading: ['"DotGothic16"', '"M PLUS Rounded 1c"', 'sans-serif'],
+        sans: ['"M PLUS Rounded 1c"', '"Nunito"', 'sans-serif'],
+        heading: ['"M PLUS Rounded 1c"', 'sans-serif'],
+        pixel: ['"DotGothic16"', 'sans-serif'],
       }
     },
   },

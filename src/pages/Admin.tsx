@@ -28,6 +28,8 @@ export default function Admin() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-pink-50/30 text-pink-600 font-bold">Loading...</div>;
 
+  console.log('Admin Render:', { isAdmin, activeTab });
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
@@ -54,17 +56,13 @@ export default function Admin() {
           </div>
         </div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-pink-100 min-h-[500px]"
-        >
+        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-pink-100 min-h-[500px]">
           {activeTab === 'home' && <HomeManager />}
           {activeTab === 'gallery' && <GalleryManager />}
           {activeTab === 'timeline' && <TimelineManager />}
           {activeTab === 'approvals' && <ApprovalsManager />}
           {activeTab === 'reports' && <ReportsManager />}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

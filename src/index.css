@@ -66,6 +66,16 @@ html, body {
     background-color: var(--k-bg);
     color: var(--k-ink);
     text-rendering: geometricPrecision;
+    font-family: "DotGothic16", sans-serif;
+  }
+  
+  .kirby-pixel h1, 
+  .kirby-pixel h2, 
+  .kirby-pixel h3, 
+  .kirby-pixel h4, 
+  .kirby-pixel h5, 
+  .kirby-pixel h6 {
+    font-family: "DotGothic16", sans-serif;
   }
   .kirby-pixel .pixel-bg {
     background-color: var(--k-bg);

@@ -3,17 +3,17 @@ import { supabase } from '../lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
-import { ForumPost } from '../types'
-import PixelWindow from '../components/pixel/PixelWindow'
-import ForumList from '../components/forum/ForumList'
-import CreatePost from '../components/forum/CreatePost'
-import PostDetail from '../components/forum/PostDetail'
-import UserProfile from '../components/forum/UserProfile'
-import UserProfileCard from '../components/forum/UserProfileCard'
-import HeadlinesSection from '../components/forum/HeadlinesSection'
-import InfoSidebar from '../components/forum/InfoSidebar'
-import CategoryColumns from '../components/forum/CategoryColumns'
-import DollWidget from '../components/forum/DollWidget'
+import { ForumPost } from '@/types'
+import PixelWindow from '@/components/common/pixel/PixelWindow'
+import ForumList from '@/components/business/forum/ForumList'
+import CreatePost from '@/components/business/forum/CreatePost'
+import PostDetail from '@/components/business/forum/PostDetail'
+import UserProfile from '@/components/business/forum/UserProfile'
+import UserProfileCard from '@/components/business/forum/UserProfileCard'
+import HeadlinesSection from '@/components/business/forum/HeadlinesSection'
+import InfoSidebar from '@/components/business/forum/InfoSidebar'
+import CategoryColumns from '@/components/business/forum/CategoryColumns'
+import DollWidget from '@/components/business/forum/DollWidget'
 
 export default function Community() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
@@ -170,6 +170,11 @@ export default function Community() {
       setView('create');
   };
 
+  const handleCreateSuccess = () => {
+      setView('home');
+      setCreateCategory('General');
+  };
+
   return (
     <div className="min-h-screen py-6 px-4 kirby-pixel pixel-bg relative overflow-hidden">
       {/* Decorative Background Elements */}
@@ -277,7 +282,7 @@ export default function Community() {
                       user={user} 
                       initialCategory={createCategory}
                       onCancel={() => setView('home')} 
-                      onSuccess={() => setView('home')} 
+                      onSuccess={handleCreateSuccess} 
                     />
                   )}
                   {view === 'detail' && selectedPostId && (
