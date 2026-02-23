@@ -1,27 +1,29 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User } from '@supabase/supabase-js'
 import { useNavigate } from 'react-router-dom'
-import { ForumPost } from '@/types'
-import PixelWindow from '@/components/common/pixel/PixelWindow'
-import ForumList from '@/components/business/forum/ForumList'
-import CreatePost from '@/components/business/forum/CreatePost'
-import PostDetail from '@/components/business/forum/PostDetail'
-import UserProfile from '@/components/business/forum/UserProfile'
-import UserProfileCard from '@/components/business/forum/UserProfileCard'
-import HeadlinesSection from '@/components/business/forum/HeadlinesSection'
-import InfoSidebar from '@/components/business/forum/InfoSidebar'
-import CategoryColumns from '@/components/business/forum/CategoryColumns'
-import DollWidget from '@/components/business/forum/DollWidget'
+import { ForumPost } from '../types'
+import { useAuthStore } from '../store'
+import { useToast } from '../components/common/Toast'
+import PixelWindow from '../components/pixel/PixelWindow'
+import ForumList from '../components/forum/ForumList'
+import CreatePost from '../components/forum/CreatePost'
+import PostDetail from '../components/forum/PostDetail'
+import UserProfile from '../components/forum/UserProfile'
+import UserProfileCard from '../components/forum/UserProfileCard'
+import HeadlinesSection from '../components/forum/HeadlinesSection'
+import InfoSidebar from '../components/forum/InfoSidebar'
+import CategoryColumns from '../components/forum/CategoryColumns'
+import DollWidget from '../components/forum/DollWidget'
 
 export default function Community() {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useAuthStore(state => state.user); // Use auth store instead of local state
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
   
   // View State: 'home' | 'list' | 'create' | 'detail' | 'profile'
   // 'home' is the new BBS index page. 'list' is the full searchable list.
@@ -88,51 +90,18 @@ export default function Community() {
   }, [selectedTag]);
 
   useEffect(() => {
-    // 1. Get Auth User
-    supabase.auth.getUser().then(async ({ data }) => {
-        const authUser = data.user;
-        if (authUser) {
-            // 2. Fetch Public Profile (for role)
-            const { data: profile } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', authUser.id)
-                .single();
-            
-            // 3. Merge profile data into user object for components to use
-            if (profile) {
-                // Manually inject role into user_metadata for compatibility with existing checks
-                authUser.user_metadata = { ...authUser.user_metadata, role: profile.role };
-            }
-            setUser(authUser);
-        } else {
-            setUser(null);
-            navigate('/login'); // Redirect to login if not authenticated
-        }
-    });
+    // Just set loading to false after a brief moment
+    // Auth is handled by the global store
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        const authUser = session?.user ?? null;
-        if (authUser) {
-             const { data: profile } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', authUser.id)
-                .single();
-            if (profile) {
-                authUser.user_metadata = { ...authUser.user_metadata, role: profile.role };
-            }
-            setUser(authUser);
-        } else {
-            setUser(null);
-            navigate('/login'); // Redirect on logout or session expiration
-        }
-    });
-    
-    if (view === 'list') fetchPosts();
-
-    return () => authListener.subscription.unsubscribe();
-  }, [fetchPosts, view, selectedTag]); 
+  // Separate effect for fetching posts when view or tag changes
+  useEffect(() => {
+    if (view === 'list' && user) {
+      fetchPosts();
+    }
+  }, [view, selectedTag, user, fetchPosts]); 
 
   // Fetch user likes when user changes
   useEffect(() => {
@@ -147,22 +116,45 @@ export default function Community() {
   const toggleLike = async (postId: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if (!user) {
-          alert('Please login to like posts');
+          showToast('Please login to like posts', 'warning');
           return;
       }
 
       const isLiked = likedPosts.has(postId);
       const newSet = new Set(likedPosts);
+      
+      // Optimistic update
       if (isLiked) {
           newSet.delete(postId);
-          await supabase.from('forum_post_likes').delete().eq('post_id', postId).eq('user_id', user.id);
           setPosts(posts.map(p => p.id === postId ? { ...p, like_count: (p.like_count || 0) - 1 } : p));
       } else {
           newSet.add(postId);
-          await supabase.from('forum_post_likes').insert({ post_id: postId, user_id: user.id });
           setPosts(posts.map(p => p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p));
       }
       setLikedPosts(newSet);
+
+      // Perform actual database operation
+      try {
+          if (isLiked) {
+              const { error } = await supabase.from('forum_post_likes').delete().eq('post_id', postId).eq('user_id', user.id);
+              if (error) throw error;
+          } else {
+              const { error } = await supabase.from('forum_post_likes').insert({ post_id: postId, user_id: user.id });
+              if (error) throw error;
+          }
+      } catch (error) {
+          console.error('Error toggling like:', error);
+          // Rollback optimistic update on error
+          if (isLiked) {
+              newSet.add(postId);
+              setPosts(posts.map(p => p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p));
+          } else {
+              newSet.delete(postId);
+              setPosts(posts.map(p => p.id === postId ? { ...p, like_count: (p.like_count || 0) - 1 } : p));
+          }
+          setLikedPosts(newSet);
+          showToast('Failed to update like. Please try again.', 'error');
+      }
   };
 
   const handleCreatePost = (category: string = 'General') => {
@@ -170,10 +162,37 @@ export default function Community() {
       setView('create');
   };
 
-  const handleCreateSuccess = () => {
-      setView('home');
-      setCreateCategory('General');
-  };
+  // Show login prompt if not authenticated
+  if (!user && !loading) {
+    return (
+      <div className="min-h-screen py-6 px-4 kirby-pixel pixel-bg relative overflow-hidden flex items-center justify-center">
+        <DollWidget />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative z-10"
+        >
+          <PixelWindow className="max-w-md mx-auto text-center p-8" title="卡比论坛">
+            <div className="space-y-6">
+              <div className="text-6xl">🔒</div>
+              <h2 className="text-2xl font-bold text-[color:var(--k-ink)] dotgothic16-regular">
+                请先登录
+              </h2>
+              <p className="text-[color:var(--k-ink)] opacity-70">
+                登录后即可查看论坛内容，与其他粉丝一起交流讨论！
+              </p>
+              <button
+                onClick={() => navigate('/login', { state: { from: '/community' } })}
+                className="w-full py-3 px-6 bg-[color:var(--k-pink)] text-white font-bold rounded-lg hover:opacity-90 transition-opacity dotgothic16-regular"
+              >
+                立即登录
+              </button>
+            </div>
+          </PixelWindow>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-6 px-4 kirby-pixel pixel-bg relative overflow-hidden">
@@ -282,7 +301,7 @@ export default function Community() {
                       user={user} 
                       initialCategory={createCategory}
                       onCancel={() => setView('home')} 
-                      onSuccess={handleCreateSuccess} 
+                      onSuccess={() => setView('home')} 
                     />
                   )}
                   {view === 'detail' && selectedPostId && (

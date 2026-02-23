@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, Sparkles, Shield } from 'lucide-react';
-import { ClickEffectSafe as ClickEffect } from '../common/ClickEffect';
-import { useAuthStore } from '@/store';
+import { supabase } from '../lib/supabase';
+import { ClickEffectSafe as ClickEffect } from './ClickEffect';
+import type { User } from '@supabase/supabase-js';
 
 export default function Layout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const user = useAuthStore(state => state.user);
-  const isAdmin = useAuthStore(state => state.isAdmin);
-  const checkUser = useAuthStore(state => state.checkUser);
-  const logout = useAuthStore(state => state.logout);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
 
   // Custom Scroll Progress Bar
@@ -28,9 +27,33 @@ export default function Layout() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Check admin status on route change too, just in case
+  useEffect(() => {
+    checkUser();
+  }, [location, isMenuOpen]); // Also check when menu opens (for mobile) or re-renders
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    
+    if (user) {
+      // Use the secure RPC function we created
+      const { data } = await supabase.rpc('is_admin');
+      if (data) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    } else {
+      setIsAdmin(false);
+    }
+  };
+
   const handleLogout = async () => {
-    await logout();
-    // Redirect is handled in store but we can add UI logic here if needed
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsAdmin(false);
+    window.location.href = '/'; // Redirect to home
   };
 
   const links = [
@@ -41,7 +64,27 @@ export default function Layout() {
     { to: '/community', label: '卡比论坛' },
   ];
 
-  // ... (rest of the component logic remains the same, just using store values)
+  // Only add Admin link if not already on the admin page (avoid clutter)
+  // Actually, keeping it in nav is good for access.
+  // But user wanted "login directly to admin", so we handled that in Login.tsx
+  // User said "naked admin link is ugly". Let's hide it from nav if we want,
+  // but usually admin needs a way to get there.
+  // Let's keep it but maybe make it subtle or only icon?
+  // User said "Admin where? And I want to login directly... naked link is ugly"
+  // So I will REMOVE it from the main links list to satisfy "too ugly/naked",
+  // relying on the redirect in Login.tsx.
+  // BUT, once logged in, how do they get back if they navigate away?
+  // Maybe a subtle icon in the corner? Or just rely on the fact they are redirected.
+  
+  // Revised plan based on "naked link is ugly":
+  // 1. Remove "Admin" text link from main nav.
+  // 2. Add a subtle "Shield" icon next to the Logo if admin, clickable to go to dashboard.
+  
+  /* 
+  if (isAdmin) {
+    links.push({ to: '/admin', label: 'Admin' });
+  } 
+  */
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-800 relative">

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactPlayer from 'react-player';
 import { Play, Image as ImageIcon, ChevronLeft, Upload, X, Loader2, Heart } from 'lucide-react';
 import { Album, MediaCategory, MediaItem } from '../types';
+import { AlbumSkeleton } from '../components/common/Skeleton';
 
 export default function Gallery() {
   const [activeCategory, setActiveCategory] = useState<MediaCategory>('concept');
@@ -21,28 +22,48 @@ export default function Gallery() {
 
   const fetchAlbums = async () => {
     setLoading(true);
-    // Sort by display_order first, then created_at
-    const { data } = await supabase
-      .from('albums')
-      .select('*')
-      .eq('category', activeCategory)
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: false });
-    
-    setAlbums(data as Album[] || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from('albums')
+        .select('*')
+        .eq('category', activeCategory)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching albums:', error);
+        setAlbums([]);
+      } else {
+        setAlbums(data as Album[] || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching albums:', err);
+      setAlbums([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMedia = async (albumId: string) => {
-    const { data } = await supabase
-      .from('media_items')
-      .select('*')
-      .eq('album_id', albumId)
-      .eq('status', 'approved') // Only show approved
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: false });
-    
-    setAlbumMedia(data as MediaItem[] || []);
+    try {
+      const { data, error } = await supabase
+        .from('media_items')
+        .select('*')
+        .eq('album_id', albumId)
+        .eq('status', 'approved')
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching media:', error);
+        setAlbumMedia([]);
+      } else {
+        setAlbumMedia(data as MediaItem[] || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching media:', err);
+      setAlbumMedia([]);
+    }
   };
 
   const handleAlbumClick = (album: Album) => {
@@ -143,7 +164,11 @@ export default function Gallery() {
                )}
 
                {loading ? (
-                 <div className="flex justify-center py-20"><Loader2 className="animate-spin text-pink-400" size={40} /></div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                   {[...Array(6)].map((_, i) => (
+                     <AlbumSkeleton key={i} />
+                   ))}
+                 </div>
                ) : albums.length === 0 ? (
                  <div className="text-center py-20 text-slate-400 bg-slate-50 rounded-3xl">
                    No albums found in this category.
