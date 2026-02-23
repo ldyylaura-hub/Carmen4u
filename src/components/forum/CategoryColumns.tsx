@@ -31,7 +31,7 @@ const CategoryColumn = ({ category, title, icon: Icon, color, onSelectPost }: Ca
     return <CategoryColumnSkeleton />;
   }
 
-  const postList = (posts || []) as ForumPost[];
+  const postList = posts || [];
 
   return (
     <div className="flex flex-col h-full bg-white border-2 border-[color:var(--k-ink)] rounded-lg shadow-[6px_6px_0_var(--k-pink-border)] overflow-hidden">
